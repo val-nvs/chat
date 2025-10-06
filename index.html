@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Space+Mono&family=Playfair+Display&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-screen h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .google-btn {
+            background: #4285f4;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .google-btn:hover {
+            background: #357ae8;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            max-width: 100%;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .chat-container.active {
+            display: flex;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding-bottom: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            padding: 10px 12px;
+        }
+
+        .message.left {
+            align-self: stretch;
+            width: 100%;
+            flex-direction: row-reverse;
+        }
+
+        .message.right {
+            align-self: stretch;
+            flex-direction: row-reverse;
+            width: 100%;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #333;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .avatar:hover {
+            transform: scale(1.1);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            line-height: 1.4;
+            background: #2a2a2a;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .modal-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: block;
+            object-fit: cover;
+        }
+        
+        .modal-name {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .modal-info {
+            text-align: center;
+            color: #999;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            background: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .modal-close:hover {
+            background: #444;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px 16px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 24px;
+            color: #e0e0e0;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            min-height: 44px;
+            max-height: 150px;
+        }
+
+        textarea:focus {
+            border-color: #4a4a4a;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #4a4a4a;
+            border: none;
+            border-radius: 24px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #5a5a5a;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .header {
+            padding: 10px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-screen" id="loginScreen">
+        <h1>Welcome to Chat</h1>
+        <button class="google-btn" onclick="signInWithGoogle()">
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="#4285F4"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="#34A853"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="#FBBC05"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="#EA4335"/></g></svg>
+            Sign in with Google
+        </button>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="header">
+            <div class="user-info">
+                <div class="avatar" id="currentUserAvatar"></div>
+                <span id="currentUserName"></span>
+            </div>
+            <button class="logout-btn" onclick="signOut()">Logout</button>
+        </div>
+        
+        <div class="messages" id="messages"></div>
+        
+        <div class="input-area">
+            <textarea id="messageInput" placeholder="Type a message..." rows="1"></textarea>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <img class="modal-avatar" id="modalAvatar" src="" alt="">
+            <div class="modal-name" id="modalName"></div>
+            <div class="modal-info" id="modalInfo"></div>
+            <button class="modal-close" onclick="closeProfile()">Close</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+        import { getDatabase, ref, push, onChildAdded, set } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+        import { firebaseConfig } from './firebase-config.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        const userFonts = ["'Inter', sans-serif", "'Space Mono', monospace", "'Playfair Display', serif"];
+        const userColors = ['#2a4a5a', '#4a2a5a', '#5a2a4a', '#2a5a4a'];
+        
+        // Generate consistent color for user based on their ID
+        function getUserTheme(userId) {
+            const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return {
+                color: userColors[hash % userColors.length],
+                textColor: '#e0e0e0',
+                font: userFonts[hash % userFonts.length]
+            };
+        }
+
+        window.signInWithGoogle = async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                currentUser = result.user;
+            } catch (error) {
+                console.error('Error signing in:', error);
+                alert('Failed to sign in. Please try again.');
+            }
+        };
+
+        window.signOut = async () => {
+            try {
+                await firebaseSignOut(auth);
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('chatContainer').classList.remove('active');
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        };
+
+        let messagesLoaded = false;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('chatContainer').classList.add('active');
+                
+                // Set current user info in header
+                const userAvatar = document.getElementById('currentUserAvatar');
+                userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName}">`;
+                document.getElementById('currentUserName').textContent = user.displayName;
+                
+                // Clear messages and reload
+                document.getElementById('messages').innerHTML = '';
+                messagesLoaded = false;
+                loadMessages();
+            } else {
+                currentUser = null;
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('chatContainer').classList.remove('active');
+                document.getElementById('messages').innerHTML = '';
+                messagesLoaded = false;
+            }
+        });
+
+        function loadMessages() {
+            const messagesRef = ref(db, 'messages');
+            
+            if (!messagesLoaded) {
+                // First load: get all existing messages
+                onChildAdded(messagesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    displayMessage(data.userId, data.userName, data.userPhoto, data.text, data.timestamp);
+                });
+                messagesLoaded = true;
+            }
+        }
+
+        window.sendMessage = () => {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (text && currentUser) {
+                const messagesRef = ref(db, 'messages');
+                push(messagesRef, {
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName,
+                    userPhoto: currentUser.photoURL,
+                    text: text,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+            }
+        };
+
+        function displayMessage(userId, userName, userPhoto, text, timestamp) {
+            const messages = document.getElementById('messages');
+            const isCurrentUser = currentUser && userId === currentUser.uid;
+            const side = isCurrentUser ? 'right' : 'left';
+            const theme = getUserTheme(userId);
+            
+            const formattedText = text.replace(/\n/g, '<br>');
+            
+            const msg = document.createElement('div');
+            msg.className = `message ${side}`;
+            msg.style.background = theme.color;
+            msg.innerHTML = `
+                <div class="avatar" onclick="openProfile('${userId}', '${userName}', '${userPhoto}')">
+                    <img src="${userPhoto}" alt="${userName}">
+                </div>
+                <div class="bubble" style="color: ${theme.textColor}; font-family: ${theme.font};">${formattedText}</div>
+            `;
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        window.openProfile = (userId, userName, userPhoto) => {
+            const modal = document.getElementById('profileModal');
+            const modalAvatar = document.getElementById('modalAvatar');
+            const modalName = document.getElementById('modalName');
+            const modalInfo = document.getElementById('modalInfo');
+            const theme = getUserTheme(userId);
+            
+            modalAvatar.src = userPhoto;
+            modalName.textContent = userName;
+            modalName.style.color = theme.textColor;
+            modalName.style.fontFamily = theme.font;
+            modalInfo.textContent = 'Google Account User';
+            
+            modal.classList.add('active');
+        };
+
+        window.closeProfile = () => {
+            document.getElementById('profileModal').classList.remove('active');
+        };
+
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                window.sendMessage();
+            }
+        });
+        
+        document.getElementById('profileModal').addEventListener('click', (e) => {
+            if (e.target.id === 'profileModal') {
+                window.closeProfile();
+            }
+        });
+    </script>
+</body>
+</html>
