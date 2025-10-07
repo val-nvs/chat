@@ -26,6 +26,7 @@
 				background: #0b0b0d;
 				height: 100dvh;
 				position: relative;
+				box-shadow: inset 0 0 0 8px #0b0b0d, inset 0 0 0 10px hsl(330,100%,50%);
 			}
 			.login-overlay {
 				position: fixed;
@@ -112,12 +113,12 @@
 				font-size: 1rem;
 				padding: 4px 8px;
 				outline: none;
-				border-bottom: 2px solid transparent;
+				border: 2px solid transparent;
 				transition: border-color 0.2s;
 			}
 			.username-edit:hover,
 			.username-edit:focus {
-				border-bottom-color: hsl(180,100%,50%);
+				border-color: hsl(180,100%,50%);
 			}
 			.logout-btn {
 				background: transparent;
@@ -134,12 +135,6 @@
 				background: hsl(0,100%,50%);
 				color: #0b0b0d;
 			}
-			@media (max-width: 600px) {
-				.logout-btn {
-					font-size: 0.75rem;
-					padding: 3px 10px;
-				}
-			}
 			.chat-container {
 				flex: 1;
 				display: flex;
@@ -154,10 +149,10 @@
 			.message {
 				align-self: flex-end;
 				position: relative;
-				font-size: 1rem;
-				line-height: 1.4;
-				padding: 0.75rem 1rem;
-				margin: 0.5rem 0;
+				font-size: 2rem;
+				line-height: 1;
+				padding: 0.5rem 1rem;
+				margin: 0.6rem 0;
 				max-width: 60%;
 				word-wrap: break-word;
 				background-color: #0b0b0d;
@@ -167,8 +162,8 @@
 			.username {
 				position: absolute;
 				top: -0.6em;
-				left: 0;
-				font-size: 0.7rem;
+				left: .6em;
+				font-size: 1.5rem;
 				background: #0b0b0d;
 				padding: 0;
 				border-radius: 0;
@@ -177,10 +172,10 @@
 			.clock {
 				position: absolute;
 				bottom: -0.6em;
-				right: 0;
-				font-size: 0.7rem;
+				right: .6em;
+				font-size: 1rem;
 				background: #0b0b0d;
-				padding: 0 0.25em;
+				padding: 0;
 				border-radius: 0;
 				pointer-events: none;
 			}
@@ -194,7 +189,7 @@
 			.chat-input {
 				flex: 1;
 				padding: 1rem;
-				font-size: 1rem;
+				font-size: 2rem;
 				background: #0b0b0d;
 				color: white;
 				border: none;
@@ -207,15 +202,9 @@
 				opacity: 0.5;
 				cursor: not-allowed;
 			}
-			@media (max-width: 600px) {
-				.chat-input {
-					font-size: 16px;
-					padding: 0.75rem;
-				}
-			}
 			.send-btn {
 				padding: 1rem 1.5rem;
-				font-size: 1rem;
+				font-size: 2rem;
 				background: #0b0b0d;
 				color: hsl(180,100%,50%);
 				border: none;
@@ -231,12 +220,6 @@
 			.send-btn:disabled {
 				opacity: 0.5;
 				cursor: not-allowed;
-			}
-			@media (max-width: 600px) {
-				.send-btn {
-					padding: 0.75rem 1rem;
-					font-size: 0.9rem;
-				}
 			}
 		</style>
 	</head>
@@ -255,11 +238,6 @@
 					<option value="solid" selected>Solid</option>
 					<option value="dashed">Dashed</option>
 					<option value="dotted">Dotted</option>
-					<option value="double">Double</option>
-					<option value="groove">Groove</option>
-					<option value="ridge">Ridge</option>
-					<option value="inset">Inset</option>
-					<option value="outset">Outset</option>
 				</select>
 			</div>
 		</div>
