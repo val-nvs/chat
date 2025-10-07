@@ -15,6 +15,7 @@
 			html, body {
 				height: 100%;
 				margin: 0;
+				overflow: hidden;
 			}
 			* {
 				font-family: 'PerfectDOS', monospace;
@@ -23,7 +24,7 @@
 				display: flex;
 				flex-direction: column;
 				background: #0b0b0d;
-				height: 100vh;
+				height: 100dvh;
 				position: relative;
 			}
 			.login-overlay {
@@ -122,14 +123,22 @@
 				background: transparent;
 				color: hsl(0,100%,50%);
 				border: 2px solid hsl(0,100%,50%);
-				padding: 6px 12px;
-				font-size: 14px;
+				padding: 4px 10px;
+				font-size: 0.8rem;
 				cursor: pointer;
 				transition: all 0.2s;
+				flex-shrink: 0;
+				white-space: nowrap;
 			}
 			.logout-btn:hover {
 				background: hsl(0,100%,50%);
 				color: #0b0b0d;
+			}
+			@media (max-width: 600px) {
+				.logout-btn {
+					font-size: 0.7rem;
+					padding: 3px 8px;
+				}
 			}
 			.chat-container {
 				flex: 1;
@@ -138,6 +147,9 @@
 				justify-content: flex-start;
 				padding: 1rem;
 				overflow-y: auto;
+				overflow-x: hidden;
+				min-height: 0;
+				-webkit-overflow-scrolling: touch;
 			}
 			.message {
 				align-self: flex-end;
@@ -177,6 +189,7 @@
 				border-top: 2px solid #333;
 				display: flex;
 				gap: 0;
+				flex-shrink: 0;
 			}
 			.chat-input {
 				flex: 1;
@@ -187,10 +200,18 @@
 				border: none;
 				outline: none;
 				box-sizing: border-box;
+				resize: none;
+				min-height: 50px;
 			}
 			.chat-input:disabled {
 				opacity: 0.5;
 				cursor: not-allowed;
+			}
+			@media (max-width: 600px) {
+				.chat-input {
+					font-size: 16px;
+					padding: 0.75rem;
+				}
 			}
 			.send-btn {
 				padding: 1rem 1.5rem;
@@ -201,6 +222,7 @@
 				border-left: 2px solid #333;
 				cursor: pointer;
 				transition: all 0.2s;
+				flex-shrink: 0;
 			}
 			.send-btn:hover:not(:disabled) {
 				background: hsl(180,100%,50%);
@@ -209,6 +231,12 @@
 			.send-btn:disabled {
 				opacity: 0.5;
 				cursor: not-allowed;
+			}
+			@media (max-width: 600px) {
+				.send-btn {
+					padding: 0.75rem 1rem;
+					font-size: 0.9rem;
+				}
 			}
 		</style>
 	</head>
