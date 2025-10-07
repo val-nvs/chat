@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Barebones — Dark Mode Chat</title>
+		<style>
+			@font-face {
+				font-family: 'PerfectDOS';
+				src: url('./PerfectDosVga.ttf') format('truetype');
+			}
+			:root {
+				color-scheme: dark;
+			}
+			html, body {
+				height: 100%;
+				margin: 0;
+				overflow: hidden;
+			}
+			* {
+				font-family: 'PerfectDOS', monospace;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				background: #0b0b0d;
+				height: 100dvh;
+				position: relative;
+			}
+			.login-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.3);
+				backdrop-filter: blur(12px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+				gap: 20px;
+				z-index: 1000;
+			}
+			.login-overlay.hidden {
+				display: none;
+			}
+			.login-overlay h1 {
+				color: hsl(180,100%,50%);
+				font-size: 2rem;
+				margin-bottom: 10px;
+			}
+			.google-btn {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				padding: 12px 24px;
+				border: 2px solid hsl(180,100%,50%);
+				font-size: 16px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				transition: all 0.2s;
+			}
+			.google-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+			}
+			.chat-header {
+				padding: 1rem;
+				border-bottom: 2px solid #333;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.user-info {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: hsl(180,100%,50%);
+			}
+			.color-picker,
+			.border-picker {
+				background: transparent;
+				border: 2px solid hsl(180,100%,50%);
+				color: hsl(180,100%,50%);
+				padding: 4px 8px;
+				font-size: 0.9rem;
+				cursor: pointer;
+				outline: none;
+			}
+			.color-picker:disabled,
+			.border-picker:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.color-picker option,
+			.border-picker option {
+				background: #0b0b0d;
+				color: white;
+			}
+			.user-avatar {
+				width: 32px;
+				height: 32px;
+				border-radius: 50%;
+				border: 2px solid hsl(180,100%,50%);
+			}
+			.username-edit {
+				background: transparent;
+				border: none;
+				color: hsl(180,100%,50%);
+				font-size: 1rem;
+				padding: 4px 8px;
+				outline: none;
+				border-bottom: 2px solid transparent;
+				transition: border-color 0.2s;
+			}
+			.username-edit:hover,
+			.username-edit:focus {
+				border-bottom-color: hsl(180,100%,50%);
+			}
+			.logout-btn {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border: 2px solid hsl(0,100%,50%);
+				padding: 4px 12px;
+				font-size: 0.85rem;
+				cursor: pointer;
+				transition: all 0.2s;
+				flex-shrink: 0;
+				white-space: nowrap;
+			}
+			.logout-btn:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			@media (max-width: 600px) {
+				.logout-btn {
+					font-size: 0.75rem;
+					padding: 3px 10px;
+				}
+			}
+			.chat-container {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				padding: 1rem;
+				overflow-y: auto;
+				overflow-x: hidden;
+				min-height: 0;
+				-webkit-overflow-scrolling: touch;
+			}
+			.message {
+				align-self: flex-end;
+				position: relative;
+				font-size: 1rem;
+				line-height: 1.4;
+				padding: 0.75rem 1rem;
+				margin: 0.5rem 0;
+				max-width: 60%;
+				word-wrap: break-word;
+				background-color: #0b0b0d;
+				border: 2px solid;
+				border-radius: 0;
+			}
+			.username {
+				position: absolute;
+				top: -0.6em;
+				left: 0;
+				font-size: 0.7rem;
+				background: #0b0b0d;
+				padding: 0;
+				border-radius: 0;
+				pointer-events: none;
+			}
+			.clock {
+				position: absolute;
+				bottom: -0.6em;
+				right: 0;
+				font-size: 0.7rem;
+				background: #0b0b0d;
+				padding: 0 0.25em;
+				border-radius: 0;
+				pointer-events: none;
+			}
+			.input-container {
+				width: 100%;
+				border-top: 2px solid #333;
+				display: flex;
+				gap: 0;
+				flex-shrink: 0;
+			}
+			.chat-input {
+				flex: 1;
+				padding: 1rem;
+				font-size: 1rem;
+				background: #0b0b0d;
+				color: white;
+				border: none;
+				outline: none;
+				box-sizing: border-box;
+				resize: none;
+				min-height: 50px;
+			}
+			.chat-input:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			@media (max-width: 600px) {
+				.chat-input {
+					font-size: 16px;
+					padding: 0.75rem;
+				}
+			}
+			.send-btn {
+				padding: 1rem 1.5rem;
+				font-size: 1rem;
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: none;
+				border-left: 2px solid #333;
+				cursor: pointer;
+				transition: all 0.2s;
+				flex-shrink: 0;
+			}
+			.send-btn:hover:not(:disabled) {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+			}
+			.send-btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			@media (max-width: 600px) {
+				.send-btn {
+					padding: 0.75rem 1rem;
+					font-size: 0.9rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="chat-header">
+			<div class="header-row">
+				<div class="user-info">
+					<img class="user-avatar" id="userAvatar" src="" alt="" style="display: none;">
+					<input type="text" class="username-edit" id="userName" placeholder="Username" disabled>
+				</div>
+				<button class="logout-btn" id="logoutBtn" onclick="signOut()" style="display: none;">LOGOUT</button>
+			</div>
+			<div class="style-controls">
+				<input type="range" class="color-slider" id="colorSlider" min="0" max="360" value="180" disabled>
+				<select class="border-picker" id="borderPicker" disabled>
+					<option value="solid" selected>Solid</option>
+					<option value="dashed">Dashed</option>
+					<option value="dotted">Dotted</option>
+					<option value="double">Double</option>
+					<option value="groove">Groove</option>
+					<option value="ridge">Ridge</option>
+					<option value="inset">Inset</option>
+					<option value="outset">Outset</option>
+				</select>
+			</div>
+		</div>
+		
+		<div class="chat-container" id="chatContainer"></div>
+		
+		<div class="input-container">
+			<input type="text" class="chat-input" id="messageInput" placeholder="Sign in to chat..." disabled>
+			<button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>SEND</button>
+		</div>
+
+		<div class="login-overlay" id="loginOverlay">
+			<h1>CHAT</h1>
+			<button class="google-btn" onclick="signInWithGoogle()">
+				<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
+				SIGN IN WITH GOOGLE
+			</button>
+		</div>
+
+		<script type="module">
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+			import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+			import { getDatabase, ref, push, onChildAdded } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+
+			const firebaseConfig = {
+				apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
+				authDomain: "social-e02b4.firebaseapp.com",
+				databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
+				projectId: "social-e02b4",
+				storageBucket: "social-e02b4.firebasestorage.app",
+				messagingSenderId: "64302705629",
+				appId: "1:64302705629:web:9090276dba0418cee6e434"
+			};
+
+			const app = initializeApp(firebaseConfig);
+			const auth = getAuth(app);
+			const db = getDatabase(app);
+			const provider = new GoogleAuthProvider();
+
+			let currentUser = null;
+			let messagesLoaded = false;
+			let userPreferences = {
+				color: '180',
+				borderStyle: 'solid'
+			};
+
+			// User color mapping
+			const userColorMap = {};
+			const hueValues = [120, 180, 300, 60, 200, 280, 30, 330];
+			let hueIndex = 0;
+
+			function getUserColor(uid) {
+				if (!userColorMap[uid]) {
+					userColorMap[uid] = hueValues[hueIndex % hueValues.length];
+					hueIndex++;
+				}
+				return `hsl(${userColorMap[uid]},100%,50%)`;
+			}
+
+			window.signInWithGoogle = async () => {
+				try {
+					await signInWithPopup(auth, provider);
+				} catch (error) {
+					console.error('Error signing in:', error);
+					alert('Failed to sign in. Please try again.');
+				}
+			};
+
+			window.signOut = async () => {
+				try {
+					await firebaseSignOut(auth);
+				} catch (error) {
+					console.error('Error signing out:', error);
+				}
+			};
+
+			onAuthStateChanged(auth, (user) => {
+				if (user) {
+					currentUser = user;
+					document.getElementById('loginOverlay').classList.add('hidden');
+					document.getElementById('userAvatar').src = user.photoURL;
+					document.getElementById('userAvatar').style.display = 'block';
+					
+					// Load saved username or use default
+					const savedUsername = localStorage.getItem('chat_username_' + user.uid);
+					document.getElementById('userName').value = savedUsername || user.displayName || 'User';
+					document.getElementById('userName').disabled = false;
+					
+					// Load saved preferences
+					const savedColor = localStorage.getItem('chat_color_' + user.uid) || '180';
+					const savedBorder = localStorage.getItem('chat_border_' + user.uid) || 'solid';
+					userPreferences.color = savedColor;
+					userPreferences.borderStyle = savedBorder;
+					document.getElementById('colorSlider').value = savedColor;
+					document.getElementById('borderPicker').value = savedBorder;
+					document.getElementById('colorSlider').disabled = false;
+					document.getElementById('borderPicker').disabled = false;
+					
+					document.getElementById('messageInput').disabled = false;
+					document.getElementById('messageInput').placeholder = 'Type a message...';
+					document.getElementById('sendBtn').disabled = false;
+					document.getElementById('logoutBtn').style.display = 'block';
+					
+					if (!messagesLoaded) {
+						loadMessages();
+					}
+				} else {
+					currentUser = null;
+					document.getElementById('loginOverlay').classList.remove('hidden');
+					document.getElementById('userAvatar').style.display = 'none';
+					document.getElementById('userName').value = '';
+					document.getElementById('userName').disabled = true;
+					document.getElementById('colorSlider').disabled = true;
+					document.getElementById('borderPicker').disabled = true;
+					document.getElementById('messageInput').disabled = true;
+					document.getElementById('messageInput').placeholder = 'Sign in to chat...';
+					document.getElementById('sendBtn').disabled = true;
+					document.getElementById('logoutBtn').style.display = 'none';
+					
+					if (!messagesLoaded) {
+						loadMessages();
+					}
+				}
+			});
+
+			function loadMessages() {
+				const messagesRef = ref(db, 'messages');
+				onChildAdded(messagesRef, (snapshot) => {
+					const data = snapshot.val();
+					displayMessage(data.userId, data.userName, data.text, data.timestamp, data.color, data.borderStyle);
+				});
+				messagesLoaded = true;
+			}
+
+			window.sendMessage = () => {
+				if (!currentUser) return;
+				
+				const input = document.getElementById('messageInput');
+				const text = input.value.trim();
+				const usernameInput = document.getElementById('userName');
+				const username = usernameInput.value.trim() || currentUser.displayName || 'User';
+				
+				if (text) {
+					const messagesRef = ref(db, 'messages');
+					push(messagesRef, {
+						userId: currentUser.uid,
+						userName: username,
+						text: text,
+						timestamp: Date.now(),
+						color: userPreferences.color,
+						borderStyle: userPreferences.borderStyle
+					});
+					input.value = '';
+				}
+			};
+
+			function displayMessage(uid, userName, text, timestamp, color, borderStyle) {
+				const container = document.getElementById('chatContainer');
+				
+				// Use saved color/border or fallback to auto-assigned color
+				const messageColor = color ? `hsl(${color},100%,50%)` : getUserColor(uid);
+				const messageBorder = borderStyle || 'solid';
+				
+				const now = new Date(timestamp);
+				const hours = String(now.getHours()).padStart(2, '0');
+				const minutes = String(now.getMinutes()).padStart(2, '0');
+				const timeStr = `${hours}:${minutes}`;
+				
+				const msg = document.createElement('div');
+				msg.className = 'message';
+				msg.style.color = messageColor;
+				msg.style.borderColor = messageColor;
+				msg.style.borderStyle = messageBorder;
+				msg.innerHTML = `
+					<span class="username" style="color: ${messageColor};">${userName}</span>
+					${text}
+					<span class="clock" style="color: ${messageColor};">${timeStr}</span>
+				`;
+				
+				container.appendChild(msg);
+				container.scrollTop = container.scrollHeight;
+			}
+
+			document.getElementById('messageInput').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter' && !e.shiftKey) {
+					e.preventDefault();
+					window.sendMessage();
+				}
+			});
+
+			// Save username when changed
+			document.getElementById('userName').addEventListener('input', (e) => {
+				if (currentUser) {
+					localStorage.setItem('chat_username_' + currentUser.uid, e.target.value);
+				}
+			});
+
+			// Save color preference when changed
+			document.getElementById('colorSlider').addEventListener('input', (e) => {
+				if (currentUser) {
+					userPreferences.color = e.target.value;
+					localStorage.setItem('chat_color_' + currentUser.uid, e.target.value);
+				}
+			});
+
+			// Save border style when changed
+			document.getElementById('borderPicker').addEventListener('change', (e) => {
+				if (currentUser) {
+					userPreferences.borderStyle = e.target.value;
+					localStorage.setItem('chat_border_' + currentUser.uid, e.target.value);
+				}
+			});
+
+			// Load messages immediately so users can see chat through overlay
+			loadMessages();
+		</script>
+	</body>
+</html>
