@@ -245,7 +245,7 @@
 			<div class="header-row">
 				<div class="user-info">
 					<img class="user-avatar" id="userAvatar" src="" alt="" style="display: none;">
-					<input type="text" class="username-edit" id="userName" placeholder="Username" disabled>
+					<input type="text" class="username-edit" id="userName" placeholder="Username" maxlength="10" disabled>
 				</div>
 				<button class="logout-btn" id="logoutBtn" onclick="signOut()" style="display: none;">LOGOUT</button>
 			</div>
@@ -453,7 +453,15 @@
 			// Save username when changed
 			document.getElementById('userName').addEventListener('input', (e) => {
 				if (currentUser) {
-					localStorage.setItem('chat_username_' + currentUser.uid, e.target.value);
+					const username = e.target.value.slice(0, 10);
+					localStorage.setItem('chat_username_' + currentUser.uid, username);
+				}
+			});
+
+			document.getElementById('userName').addEventListener('blur', (e) => {
+				if (currentUser) {
+					const username = e.target.value.slice(0, 10);
+					localStorage.setItem('chat_username_' + currentUser.uid, username);
 				}
 			});
 
