@@ -2,7 +2,7 @@
   "name": "chat",
   "short_name": "chat",
   "description": "Retro dark mode chat application",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0b0d",
   "theme_color": "#0b0b0d",
