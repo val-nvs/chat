@@ -3,7 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Barebones — Dark Mode Chat</title>
+		<link rel="icon" type="image/png" href="favicon.png" />
+		<title>chat</title>
 		<style>
 			@font-face {
 				font-family: 'PerfectDOS';
@@ -34,8 +35,7 @@
 				left: 0;
 				width: 100%;
 				height: 100%;
-				background: rgba(11, 11, 13, 0.3);
-				backdrop-filter: blur(12px);
+				background: rgba(11, 11, 13, 0.8);
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -51,7 +51,20 @@
 				font-size: 1.5rem;
 				margin-bottom: 10px;
 			}
-			.google-btn {
+			.username-input {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: 2px solid hsl(180,100%,50%);
+				padding: 12px 24px;
+				font-size: 16px;
+				outline: none;
+				width: 250px;
+				text-align: center;
+			}
+			.username-input::placeholder {
+				color: hsl(180,100%,30%);
+			}
+			.google-btn, .anon-btn {
 				background: hsl(180,100%,50%);
 				color: #0b0b0d;
 				padding: 12px 24px;
@@ -62,10 +75,22 @@
 				align-items: center;
 				gap: 10px;
 				transition: all 0.2s;
+				width: 250px;
+				justify-content: center;
 			}
-			.google-btn:hover {
+			.google-btn:hover, .anon-btn:hover {
 				background: #0b0b0d;
 				color: hsl(180,100%,50%);
+			}
+			.anon-btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.error-message {
+				color: hsl(0,100%,50%);
+				font-size: 0.9rem;
+				text-align: center;
+				max-width: 250px;
 			}
 			.chat-header {
 				padding: 1rem;
@@ -73,6 +98,8 @@
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				flex-wrap: wrap;
+				gap: 10px;
 			}
 			.user-info {
 				display: flex;
@@ -80,8 +107,89 @@
 				gap: 10px;
 				color: hsl(180,100%,50%);
 			}
-			.color-picker,
-			.border-picker {
+			.username-display {
+				cursor: pointer;
+				padding: 4px 8px;
+				border: 2px solid transparent;
+				transition: border-color 0.2s;
+			}
+			.username-display:hover {
+				border-color: hsl(180,100%,50%);
+			}
+			.verified-badge {
+				display: none !important;
+			}
+			.username-prompt {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 3000;
+			}
+			.username-prompt.hidden {
+				display: none;
+			}
+			.prompt-box {
+				background: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 2rem;
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				min-width: 300px;
+			}
+			.prompt-title {
+				color: hsl(180,100%,50%);
+				font-size: 1.2rem;
+				text-align: center;
+			}
+			.prompt-input {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: 2px solid hsl(180,100%,50%);
+				padding: 12px;
+				font-size: 16px;
+				outline: none;
+				text-align: center;
+			}
+			.prompt-buttons {
+				display: flex;
+				gap: 10px;
+			}
+			.prompt-btn {
+				flex: 1;
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				padding: 12px;
+				border: 2px solid hsl(180,100%,50%);
+				font-size: 16px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+			.prompt-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+			}
+			.prompt-btn.cancel {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border-color: hsl(0,100%,50%);
+			}
+			.prompt-btn.cancel:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			.style-controls {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+			}
+			.color-slider, .border-picker {
 				background: transparent;
 				border: 2px solid hsl(180,100%,50%);
 				color: hsl(180,100%,50%);
@@ -90,35 +198,9 @@
 				cursor: pointer;
 				outline: none;
 			}
-			.color-picker:disabled,
-			.border-picker:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
-			.color-picker option,
 			.border-picker option {
 				background: #0b0b0d;
 				color: white;
-			}
-			.user-avatar {
-				width: 32px;
-				height: 32px;
-				border-radius: 50%;
-				border: 2px solid hsl(180,100%,50%);
-			}
-			.username-edit {
-				background: transparent;
-				border: none;
-				color: hsl(180,100%,50%);
-				font-size: 1rem;
-				padding: 4px 8px;
-				outline: none;
-				border: 2px solid transparent;
-				transition: border-color 0.2s;
-			}
-			.username-edit:hover,
-			.username-edit:focus {
-				border-color: hsl(180,100%,50%);
 			}
 			.logout-btn {
 				background: transparent;
@@ -137,14 +219,17 @@
 			}
 			.chat-container {
 				flex: 1;
-				display: flex;
-				flex-direction: column;
-				justify-content: flex-start;
 				padding: 1rem;
 				overflow-y: auto;
 				overflow-x: hidden;
 				min-height: 0;
 				-webkit-overflow-scrolling: touch;
+			}
+			.messages-wrapper {
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-end;
+				min-height: 100%;
 			}
 			.message {
 				align-self: flex-end;
@@ -158,6 +243,11 @@
 				background-color: #0b0b0d;
 				border: 2px solid;
 				border-radius: 0;
+				cursor: pointer;
+				transition: transform 0.1s;
+			}
+			.message:hover {
+				transform: translateX(-2px);
 			}
 			.username {
 				position: absolute;
@@ -185,6 +275,7 @@
 				display: flex;
 				gap: 0;
 				flex-shrink: 0;
+				min-width: 0;
 			}
 			.chat-input {
 				flex: 1;
@@ -197,10 +288,7 @@
 				box-sizing: border-box;
 				resize: none;
 				min-height: 50px;
-			}
-			.chat-input:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
+				min-width: 0;
 			}
 			.send-btn {
 				padding: 1rem 1.5rem;
@@ -212,55 +300,162 @@
 				cursor: pointer;
 				transition: all 0.2s;
 				flex-shrink: 0;
+				white-space: nowrap;
+				min-width: fit-content;
 			}
-			.send-btn:hover:not(:disabled) {
+			.send-btn:hover {
 				background: hsl(180,100%,50%);
 				color: #0b0b0d;
 			}
-			.send-btn:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
+			.profile-modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 2000;
+			}
+			.profile-modal.hidden {
+				display: none;
+			}
+			.profile-content {
+				background: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 2rem;
+				max-width: 500px;
+				width: 90%;
+				max-height: 80vh;
+				overflow-y: auto;
+			}
+			.profile-header {
+				color: hsl(180,100%,50%);
+				font-size: 1.5rem;
+				margin-bottom: 1rem;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.close-btn {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border: 2px solid hsl(0,100%,50%);
+				padding: 4px 12px;
+				font-size: 0.85rem;
+				cursor: pointer;
+			}
+			.close-btn:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			.profile-section {
+				margin-top: 1rem;
+			}
+			.profile-label {
+				color: hsl(180,100%,50%);
+				font-size: 1rem;
+				margin-bottom: 0.5rem;
+			}
+			.profile-textarea {
+				width: 100%;
+				background: #0b0b0d;
+				color: white;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 0.5rem;
+				font-size: 1rem;
+				outline: none;
+				resize: vertical;
+				min-height: 100px;
+				box-sizing: border-box;
+			}
+			.profile-textarea:read-only {
+				opacity: 0.7;
+			}
+			.save-btn {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 8px 16px;
+				font-size: 1rem;
+				cursor: pointer;
+				margin-top: 1rem;
+				width: 100%;
+			}
+			.save-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
 			}
 		</style>
 	</head>
 	<body>
 		<div class="chat-header">
-			<div class="header-row">
-				<div class="user-info">
-					<img class="user-avatar" id="userAvatar" src="" alt="" style="display: none;">
-					<input type="text" class="username-edit" id="userName" placeholder="Username" maxlength="10" disabled>
-				</div>
-				<button class="logout-btn" id="logoutBtn" onclick="signOut()" style="display: none;">LOGOUT</button>
+			<div class="user-info">
+				<span class="username-display" id="usernameDisplay" onclick="openMyProfile()"></span>
 			</div>
 			<div class="style-controls">
-				<input type="range" class="color-slider" id="colorSlider" min="0" max="360" value="180" disabled>
-				<select class="border-picker" id="borderPicker" disabled>
+				<input type="range" class="color-slider" id="colorSlider" min="0" max="360" value="180">
+				<select class="border-picker" id="borderPicker">
 					<option value="solid" selected>Solid</option>
 					<option value="dashed">Dashed</option>
 					<option value="dotted">Dotted</option>
 				</select>
+				<button class="logout-btn" id="logoutBtn" onclick="signOut()">LOGOUT</button>
 			</div>
 		</div>
 		
-		<div class="chat-container" id="chatContainer"></div>
+		<div class="chat-container" id="chatContainer">
+			<div class="messages-wrapper" id="messagesWrapper"></div>
+		</div>
 		
 		<div class="input-container">
-			<input type="text" class="chat-input" id="messageInput" placeholder="Sign in to chat..." disabled>
-			<button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>SEND</button>
+			<input type="text" class="chat-input" id="messageInput" placeholder="Type...">
+			<button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND</button>
 		</div>
 
 		<div class="login-overlay" id="loginOverlay">
 			<h1>CHAT</h1>
+			<div class="error-message" id="loginError" style="display: none;"></div>
+			<input type="text" class="username-input" id="anonUsername" placeholder="Enter username" maxlength="20">
+			<button class="anon-btn" id="anonBtn" onclick="signInAnonymously()">JOIN AS GUEST</button>
+			<div style="color: hsl(180,100%,50%); margin: 10px 0;">- OR -</div>
 			<button class="google-btn" onclick="signInWithGoogle()">
 				<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
 				SIGN IN WITH GOOGLE
 			</button>
 		</div>
 
+		<div class="username-prompt hidden" id="usernamePrompt">
+			<div class="prompt-box">
+				<div class="prompt-title">CLAIM USERNAME</div>
+				<input type="text" class="prompt-input" id="promptUsernameInput" placeholder="Enter username" maxlength="20">
+				<div class="prompt-buttons">
+					<button class="prompt-btn cancel" onclick="cancelUsername()">CANCEL</button>
+					<button class="prompt-btn" onclick="confirmUsername()">CONFIRM</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="profile-modal hidden" id="profileModal">
+			<div class="profile-content">
+				<div class="profile-header">
+					<span id="profileUsername">Profile</span>
+					<button class="close-btn" onclick="closeProfile()">CLOSE</button>
+				</div>
+				<div class="profile-section">
+					<div class="profile-label">ABOUT ME</div>
+					<textarea class="profile-textarea" id="profileAbout" placeholder="Tell us about yourself..." maxlength="500"></textarea>
+				</div>
+				<button class="save-btn" id="saveProfileBtn" onclick="saveProfile()">SAVE</button>
+			</div>
+		</div>
+
 		<script type="module">
 			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
-			import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
-			import { getDatabase, ref, push, onChildAdded } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+			import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously as firebaseSignInAnonymously, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+			import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
 			const firebaseConfig = {
 				apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
@@ -283,8 +478,12 @@
 				color: '180',
 				borderStyle: 'solid'
 			};
+			let claimedUsernames = {};
+			let pendingGoogleUser = null;
+			let loadedMessageIds = new Set();
+			let lastMessageId = null;
+			let initialLoadComplete = false;
 
-			// User color mapping
 			const userColorMap = {};
 			const hueValues = [120, 180, 300, 60, 200, 280, 30, 330];
 			let hueIndex = 0;
@@ -297,49 +496,164 @@
 				return `hsl(${userColorMap[uid]},100%,50%)`;
 			}
 
+			function showLoginError(message) {
+				const errorEl = document.getElementById('loginError');
+				errorEl.textContent = message;
+				errorEl.style.display = 'block';
+				setTimeout(() => {
+					errorEl.style.display = 'none';
+				}, 5000);
+			}
+
+			async function loadClaimedUsernames() {
+				try {
+					const usernamesRef = ref(db, 'claimedUsernames');
+					const snapshot = await get(usernamesRef);
+					if (snapshot.exists()) {
+						claimedUsernames = snapshot.val();
+					}
+				} catch (error) {
+					console.error('Error loading usernames:', error);
+				}
+			}
+
+			window.signInAnonymously = async () => {
+				const username = document.getElementById('anonUsername').value.trim();
+				if (!username) {
+					showLoginError('Please enter a username');
+					return;
+				}
+
+				const lowerUsername = username.toLowerCase();
+				if (claimedUsernames[lowerUsername]) {
+					showLoginError('Username claimed by Google user. Choose another.');
+					return;
+				}
+
+				try {
+					// Store username BEFORE signing in
+					sessionStorage.setItem('pendingAnonUsername', username);
+					console.log('Pre-storing username:', username);
+					
+					await firebaseSignInAnonymously(auth);
+				} catch (error) {
+					console.error('Error signing in anonymously:', error);
+					showLoginError('Failed to join. Check Firebase settings.');
+					sessionStorage.removeItem('pendingAnonUsername');
+				}
+			};
+
 			window.signInWithGoogle = async () => {
 				try {
-					await signInWithPopup(auth, provider);
+					const result = await signInWithPopup(auth, provider);
+					pendingGoogleUser = result.user;
+					
+					// Check if user already has a username
+					const userRef = ref(db, `users/${pendingGoogleUser.uid}`);
+					const snapshot = await get(userRef);
+					
+					if (snapshot.exists() && snapshot.val().username) {
+						// User already exists, no need to prompt
+						return;
+					}
+					
+					// Show custom prompt
+					document.getElementById('promptUsernameInput').value = pendingGoogleUser.displayName || 'User';
+					document.getElementById('usernamePrompt').classList.remove('hidden');
 				} catch (error) {
 					console.error('Error signing in:', error);
-					alert('Failed to sign in. Please try again.');
+					showLoginError('Sign in failed. Check Firebase settings.');
+				}
+			};
+
+			window.confirmUsername = async () => {
+				const username = document.getElementById('promptUsernameInput').value.trim();
+				if (!username) {
+					return;
+				}
+
+				const lowerUsername = username.toLowerCase();
+				
+				try {
+					const usernamesRef = ref(db, 'claimedUsernames');
+					const snapshot = await get(usernamesRef);
+					const existing = snapshot.exists() ? snapshot.val() : {};
+					
+					if (existing[lowerUsername] && existing[lowerUsername] !== pendingGoogleUser.uid) {
+						showLoginError('Username already claimed. Try another.');
+						return;
+					}
+
+					await set(ref(db, `claimedUsernames/${lowerUsername}`), pendingGoogleUser.uid);
+					await set(ref(db, `users/${pendingGoogleUser.uid}`), {
+						username,
+						isVerified: true,
+						about: ''
+					});
+					
+					claimedUsernames[lowerUsername] = pendingGoogleUser.uid;
+					document.getElementById('usernamePrompt').classList.add('hidden');
+					pendingGoogleUser = null;
+				} catch (error) {
+					console.error('Error claiming username:', error);
+					showLoginError('Failed to claim username.');
+				}
+			};
+
+			window.cancelUsername = async () => {
+				document.getElementById('usernamePrompt').classList.add('hidden');
+				if (pendingGoogleUser) {
+					await firebaseSignOut(auth);
+					pendingGoogleUser = null;
 				}
 			};
 
 			window.signOut = async () => {
 				try {
+					if (currentUser) {
+						sessionStorage.removeItem('anonUserData_' + currentUser.uid);
+					}
 					await firebaseSignOut(auth);
 				} catch (error) {
 					console.error('Error signing out:', error);
 				}
 			};
 
-			onAuthStateChanged(auth, (user) => {
+			onAuthStateChanged(auth, async (user) => {
 				if (user) {
 					currentUser = user;
 					document.getElementById('loginOverlay').classList.add('hidden');
-					document.getElementById('userAvatar').src = user.photoURL;
-					document.getElementById('userAvatar').style.display = 'block';
 					
-					// Load saved username or use default
-					const savedUsername = localStorage.getItem('chat_username_' + user.uid);
-					document.getElementById('userName').value = savedUsername || user.displayName || 'User';
-					document.getElementById('userName').disabled = false;
+					let username;
 					
-					// Load saved preferences
-					const savedColor = localStorage.getItem('chat_color_' + user.uid) || '180';
-					const savedBorder = localStorage.getItem('chat_border_' + user.uid) || 'solid';
-					userPreferences.color = savedColor;
-					userPreferences.borderStyle = savedBorder;
-					document.getElementById('colorSlider').value = savedColor;
-					document.getElementById('borderPicker').value = savedBorder;
-					document.getElementById('colorSlider').disabled = false;
-					document.getElementById('borderPicker').disabled = false;
+					if (user.isAnonymous) {
+						// Get the pending username and store it permanently
+						const pendingUsername = sessionStorage.getItem('pendingAnonUsername');
+						
+						if (pendingUsername) {
+							username = pendingUsername;
+							const anonData = { username, isAnonymous: true };
+							sessionStorage.setItem('anonUserData_' + user.uid, JSON.stringify(anonData));
+							sessionStorage.removeItem('pendingAnonUsername');
+							console.log('Assigned username:', username, 'to UID:', user.uid);
+						} else {
+							const anonData = JSON.parse(sessionStorage.getItem('anonUserData_' + user.uid) || '{}');
+							username = anonData.username || 'Guest';
+						}
+					} else {
+						const userRef = ref(db, `users/${user.uid}`);
+						const snapshot = await get(userRef);
+						const userData = snapshot.val() || {};
+						username = userData.username || user.displayName || 'User';
+					}
 					
-					document.getElementById('messageInput').disabled = false;
-					document.getElementById('messageInput').placeholder = 'Type...';
-					document.getElementById('sendBtn').disabled = false;
-					document.getElementById('logoutBtn').style.display = 'block';
+					document.getElementById('usernameDisplay').textContent = username;
+					
+					const savedPrefs = JSON.parse(sessionStorage.getItem('userPrefs_' + user.uid) || '{}');
+					userPreferences.color = savedPrefs.color || '180';
+					userPreferences.borderStyle = savedPrefs.borderStyle || 'solid';
+					document.getElementById('colorSlider').value = userPreferences.color;
+					document.getElementById('borderPicker').value = userPreferences.borderStyle;
 					
 					if (!messagesLoaded) {
 						loadMessages();
@@ -347,15 +661,8 @@
 				} else {
 					currentUser = null;
 					document.getElementById('loginOverlay').classList.remove('hidden');
-					document.getElementById('userAvatar').style.display = 'none';
-					document.getElementById('userName').value = '';
-					document.getElementById('userName').disabled = true;
-					document.getElementById('colorSlider').disabled = true;
-					document.getElementById('borderPicker').disabled = true;
-					document.getElementById('messageInput').disabled = true;
-					document.getElementById('messageInput').placeholder = 'Sign in to chat...';
-					document.getElementById('sendBtn').disabled = true;
-					document.getElementById('logoutBtn').style.display = 'none';
+					document.getElementById('usernameDisplay').textContent = 'Guest';
+					sessionStorage.removeItem('pendingAnonUsername');
 					
 					if (!messagesLoaded) {
 						loadMessages();
@@ -365,9 +672,40 @@
 
 			function loadMessages() {
 				const messagesRef = ref(db, 'messages');
+				let messageCount = 0;
+				
 				onChildAdded(messagesRef, (snapshot) => {
+					const messageId = snapshot.key;
+					
+					// Skip if we already loaded this message
+					if (loadedMessageIds.has(messageId)) {
+						return;
+					}
+					
+					loadedMessageIds.add(messageId);
 					const data = snapshot.val();
-					displayMessage(data.userId, data.userName, data.text, data.timestamp, data.color, data.borderStyle);
+					
+					messageCount++;
+					
+					// Only animate if initial load is complete (meaning this is a NEW message)
+					const shouldAnimate = initialLoadComplete;
+					
+					displayMessage(data.userId, data.userName, data.text, data.timestamp, data.color, data.borderStyle, shouldAnimate);
+					
+					// Remove oldest message from DOM if we have more than 15
+					const wrapper = document.getElementById('messagesWrapper');
+					while (wrapper.children.length > 15) {
+						wrapper.removeChild(wrapper.firstChild);
+					}
+					
+					// Mark initial load as complete after first batch
+					if (!initialLoadComplete && messageCount > 0) {
+						setTimeout(() => {
+							initialLoadComplete = true;
+						}, 500);
+					}
+					
+					lastMessageId = messageId;
 				});
 				messagesLoaded = true;
 			}
@@ -377,10 +715,10 @@
 				
 				const input = document.getElementById('messageInput');
 				const text = input.value.trim();
-				const usernameInput = document.getElementById('userName');
-				const username = usernameInput.value.trim() || currentUser.displayName || 'User';
 				
 				if (text) {
+					const username = document.getElementById('usernameDisplay').textContent;
+					
 					const messagesRef = ref(db, 'messages');
 					push(messagesRef, {
 						userId: currentUser.uid,
@@ -394,10 +732,9 @@
 				}
 			};
 
-			function displayMessage(uid, userName, text, timestamp, color, borderStyle) {
-				const container = document.getElementById('chatContainer');
+			function displayMessage(uid, userName, text, timestamp, color, borderStyle, isLastMessage = false) {
+				const wrapper = document.getElementById('messagesWrapper');
 				
-				// Use saved color/border or fallback to auto-assigned color
 				const messageColor = color ? `hsl(${color},100%,50%)` : getUserColor(uid);
 				const messageBorder = borderStyle || 'solid';
 				
@@ -411,15 +748,134 @@
 				msg.style.color = messageColor;
 				msg.style.borderColor = messageColor;
 				msg.style.borderStyle = messageBorder;
-				msg.innerHTML = `
-					<span class="username" style="color: ${messageColor};">${userName}</span>
-					${text}
-					<span class="clock" style="color: ${messageColor};">${timeStr}</span>
-				`;
+				msg.onclick = () => openUserProfile(uid);
 				
-				container.appendChild(msg);
+				const usernameSpan = document.createElement('span');
+				usernameSpan.className = 'username';
+				usernameSpan.style.color = messageColor;
+				
+				const textSpan = document.createElement('span');
+				textSpan.className = 'message-text';
+				
+				const clockSpan = document.createElement('span');
+				clockSpan.className = 'clock';
+				clockSpan.style.color = messageColor;
+				clockSpan.textContent = timeStr;
+				
+				msg.appendChild(usernameSpan);
+				msg.appendChild(textSpan);
+				msg.appendChild(clockSpan);
+				
+				wrapper.appendChild(msg);
+				
+				// Only animate the last message
+				if (isLastMessage) {
+					let usernameIndex = 0;
+					let textIndex = 0;
+					const typeSpeed = 80; // milliseconds per character
+					
+					function typeCharacter() {
+						let stillTyping = false;
+						
+						// Type username character
+						if (usernameIndex < userName.length) {
+							usernameSpan.textContent += userName[usernameIndex];
+							usernameIndex++;
+							stillTyping = true;
+						}
+						
+						// Type message text character
+						if (textIndex < text.length) {
+							textSpan.textContent += text[textIndex];
+							textIndex++;
+							stillTyping = true;
+						}
+						
+						// Auto-scroll to bottom during typing
+						const container = document.getElementById('chatContainer');
+						container.scrollTop = container.scrollHeight;
+						
+						if (stillTyping) {
+							setTimeout(typeCharacter, typeSpeed);
+						}
+					}
+					
+					typeCharacter();
+				} else {
+					// Show full text immediately for older messages
+					usernameSpan.textContent = userName;
+					textSpan.textContent = text;
+				}
+				
+				// Initial scroll
+				const container = document.getElementById('chatContainer');
 				container.scrollTop = container.scrollHeight;
 			}
+
+			window.openMyProfile = () => {
+				if (!currentUser) return;
+				openUserProfile(currentUser.uid);
+			};
+
+			window.openUserProfile = async (uid) => {
+				const modal = document.getElementById('profileModal');
+				const usernameEl = document.getElementById('profileUsername');
+				const aboutEl = document.getElementById('profileAbout');
+				const saveBtn = document.getElementById('saveProfileBtn');
+				
+				modal.classList.remove('hidden');
+				
+				if (currentUser && !currentUser.isAnonymous && uid === currentUser.uid) {
+					const userRef = ref(db, `users/${uid}`);
+					const snapshot = await get(userRef);
+					const userData = snapshot.val() || {};
+					
+					usernameEl.textContent = userData.username || 'User';
+					aboutEl.value = userData.about || '';
+					aboutEl.readOnly = false;
+					saveBtn.style.display = 'block';
+				} else {
+					const userRef = ref(db, `users/${uid}`);
+					const snapshot = await get(userRef);
+					const userData = snapshot.val();
+					
+					if (userData) {
+						usernameEl.textContent = userData.username || 'User';
+						aboutEl.value = userData.about || 'No information available.';
+						aboutEl.readOnly = true;
+						saveBtn.style.display = 'none';
+					} else {
+						usernameEl.textContent = 'Anonymous User';
+						aboutEl.value = 'This is an anonymous user.';
+						aboutEl.readOnly = true;
+						saveBtn.style.display = 'none';
+					}
+				}
+			};
+
+			window.closeProfile = () => {
+				document.getElementById('profileModal').classList.add('hidden');
+			};
+
+			window.saveProfile = async () => {
+				if (!currentUser || currentUser.isAnonymous) return;
+				
+				const about = document.getElementById('profileAbout').value;
+				const userRef = ref(db, `users/${currentUser.uid}`);
+				const snapshot = await get(userRef);
+				const userData = snapshot.val() || {};
+				
+				await set(userRef, {
+					...userData,
+					about: about
+				});
+				
+				const saveBtn = document.getElementById('saveProfileBtn');
+				saveBtn.textContent = 'SAVED!';
+				setTimeout(() => {
+					saveBtn.textContent = 'SAVE';
+				}, 2000);
+			};
 
 			document.getElementById('messageInput').addEventListener('keypress', (e) => {
 				if (e.key === 'Enter' && !e.shiftKey) {
@@ -428,38 +884,39 @@
 				}
 			});
 
-			// Save username when changed
-			document.getElementById('userName').addEventListener('input', (e) => {
-				if (currentUser) {
-					const username = e.target.value.slice(0, 10);
-					localStorage.setItem('chat_username_' + currentUser.uid, username);
+			document.getElementById('anonUsername').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					window.signInAnonymously();
 				}
 			});
 
-			document.getElementById('userName').addEventListener('blur', (e) => {
-				if (currentUser) {
-					const username = e.target.value.slice(0, 10);
-					localStorage.setItem('chat_username_' + currentUser.uid, username);
+			document.getElementById('promptUsernameInput').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					window.confirmUsername();
 				}
 			});
 
-			// Save color preference when changed
 			document.getElementById('colorSlider').addEventListener('input', (e) => {
 				if (currentUser) {
 					userPreferences.color = e.target.value;
-					localStorage.setItem('chat_color_' + currentUser.uid, e.target.value);
+					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
+					prefs.color = e.target.value;
+					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
 				}
 			});
 
-			// Save border style when changed
 			document.getElementById('borderPicker').addEventListener('change', (e) => {
 				if (currentUser) {
 					userPreferences.borderStyle = e.target.value;
-					localStorage.setItem('chat_border_' + currentUser.uid, e.target.value);
+					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
+					prefs.borderStyle = e.target.value;
+					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
 				}
 			});
 
-			// Load messages immediately so users can see chat through overlay
+			await loadClaimedUsernames();
 			loadMessages();
 		</script>
 	</body>
