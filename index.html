@@ -527,15 +527,16 @@
         const div = document.createElement('div');
         div.id = 'overlay';
         div.className = 'modal';
+        const userColor = `hsl(${state.profileData?.color || '0'},100%,50%)`;
         div.innerHTML = `
-          <div class="modal-content">
-            <div class="modal-header">
+          <div class="modal-content" style="border-color: ${userColor}">
+            <div class="modal-header" style="color: ${userColor}">
               <span>${state.profileData?.username || 'User'}</span>
               <button class="close-btn" id="closeBtn">CLOSE</button>
             </div>
-            <div style="color:hsl(180,100%,50%);margin-bottom:0.5rem">ABOUT ME</div>
-            <textarea id="aboutInput" maxlength="500">${state.profileData?.about || ''}</textarea>
-            ${state.profileUid === state.user?.uid ? '<button id="saveBtn">SAVE</button>' : ''}
+            <div style="color:${userColor};margin-bottom:0.5rem">ABOUT ME</div>
+            <textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}">${state.profileData?.about || ''}</textarea>
+            ${state.profileUid === state.user?.uid ? '<button id="saveBtn" style="background: '+userColor+'; color: #0b0b0d">SAVE</button>' : ''}
           </div>
         `;
         document.body.appendChild(div);
