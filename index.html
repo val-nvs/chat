@@ -520,11 +520,22 @@
           </div>
         `;
         document.body.appendChild(div);
-        document.getElementById('emailInput').oninput = e => state.loginEmail = e.target.value;
-        document.getElementById('passwordInput').oninput = e => state.loginPassword = e.target.value;
-        document.getElementById('passwordInput').onkeypress = e => e.key === 'Enter' && handleAuth();
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        emailInput.oninput = e => state.loginEmail = e.target.value;
+        passwordInput.oninput = e => state.loginPassword = e.target.value;
+        passwordInput.onkeypress = e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAuth();
+          }
+        };
         document.getElementById('authBtn').onclick = handleAuth;
-        document.getElementById('toggleLink').onclick = () => { state.isSignUp = !state.isSignUp; state.error = ''; renderOverlay(); };
+        document.getElementById('toggleLink').onclick = () => { 
+          state.isSignUp = !state.isSignUp; 
+          state.error = ''; 
+          renderOverlay(); 
+        };
         return;
       }
 
