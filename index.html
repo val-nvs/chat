@@ -1,702 +1,702 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>chat</title>
-  <style>
-    @font-face {
-      font-family: 'PerfectDOS';
-      src: url('./PerfectDosVga.ttf') format('truetype');
-    }
-    * { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
-    
-    body {
-      border: 1px solid hsl(180,100%,50%);
-      box-sizing: border-box;
-    }
-    
-    .login-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(11,11,13,0.5);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 20px;
-      z-index: 100;
-    }
-    .login-overlay h1 { color: hsl(180,100%,50%); font-size: 2rem; }
-    .login-form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
-    .login-input {
-      background: #0b0b0d;
-      color: hsl(180,100%,50%);
-      border: 2px solid hsl(180,100%,50%);
-      padding: 12px;
-      font-size: 16px;
-      outline: none;
-    }
-    .login-input::placeholder { color: hsl(180,100%,30%); }
-    .login-btn {
-      background: hsl(180,100%,50%);
-      color: #0b0b0d;
-      padding: 12px 24px;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .toggle-link {
-      color: hsl(180,100%,50%);
-      text-align: center;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    
-    .chat-app { 
-      display: flex; 
-      flex-direction: column; 
-      height: 100vh;
-      overflow: hidden;
-    }
-    .floating-controls {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      display: flex;
-      gap: 10px;
-      z-index: 1000;
-    }
-    .username, .logout-btn { 
-      padding: 8px 16px;
-      background: rgba(11,11,13,0.9);
-      border: 2px solid;
-      backdrop-filter: blur(10px);
-      cursor: pointer;
-    }
-    .username { color: hsl(180,100%,50%); border-color: hsl(180,100%,50%); }
-    .logout-btn { color: hsl(0,100%,50%); border-color: hsl(0,100%,50%); }
-    
-    .messages {
-      flex: 1;
-      padding: 1rem;
-      padding-top: 4rem;
-      overflow-y: scroll;
-      overflow-x: hidden;
-      min-height: 0;
-      -webkit-overflow-scrolling: touch;
-    }
-    .messages::-webkit-scrollbar {
-      width: 1ch;
-    }
-    .messages::-webkit-scrollbar-track {
-      background: #0b0b0d;
-    }
-    .messages::-webkit-scrollbar-thumb {
-      background: hsl(180,100%,50%);
-    }
-    .messages-wrapper {
-      display: flex;
-      flex-direction: column;
-      min-height: min-content;
-    }
-    .message {
-      position: relative;
-      font-size: 1.5rem;
-      padding: 0.5rem 1rem;
-      margin: 0.6rem 0;
-      max-width: 60%;
-      align-self: flex-end;
-      background: #0b0b0d;
-      border: 2px solid;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-    .message:hover { transform: translateX(-2px); }
-    .message .name, .message .time { position: absolute; background: #0b0b0d; }
-    .message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
-    .message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
-    
-    .input-area { border-top: 2px solid #333; display: flex; }
-    .input-area input {
-      flex: 1;
-      padding: 1rem;
-      font-size: 1.5rem;
-      background: #0b0b0d;
-      color: hsl(var(--user-color, 180),100%,50%);
-      border: none;
-      outline: none;
-    }
-    .send-btn {
-      padding: 1rem 1.5rem;
-      font-size: 1.5rem;
-      background: #0b0b0d;
-      color: white;
-      border: none;
-      border-left: 2px solid #333;
-      cursor: pointer;
-    }
-    
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(11,11,13,0.5);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-    }
-    .modal-content {
-      background: #0b0b0d;
-      border: 2px solid white;
-      padding: 2rem;
-      min-width: 300px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      color: white;
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      display: flex;
-      justify-content: space-between;
-    }
-    .modal input, .modal textarea {
-      width: 100%;
-      background: #0b0b0d;
-      color: white;
-      border: 2px solid #666;
-      padding: 12px;
-      font-size: 16px;
-      outline: none;
-      margin: 10px 0;
-    }
-    .modal textarea { color: white; min-height: 100px; resize: vertical; }
-    .modal textarea:read-only { 
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-    .modal button {
-      background: white;
-      color: #0b0b0d;
-      padding: 12px;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-    .close-btn {
-      background: transparent !important;
-      color: hsl(0,100%,50%) !important;
-      border: 2px solid hsl(0,100%,50%) !important;
-      padding: 4px 12px !important;
-      width: auto !important;
-      margin: 0 !important;
-    }
-    .error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
-    
-    .style-section { margin-top: 1.5rem; }
-    .style-label {
-      color: white;
-      font-size: 1rem;
-      margin-bottom: 0.8rem;
-      display: block;
-    }
-    .color-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 6px;
-      margin-bottom: 1rem;
-    }
-    .color-option {
-      aspect-ratio: 1;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
-      width: 100%;
-      height: 100%;
-    }
-    .color-option.selected {
-      border-color: white;
-      box-shadow: 0 0 8px rgba(255,255,255,0.5);
-    }
-    .border-options { display: flex; gap: 8px; }
-    .border-option {
-      flex: 1;
-      padding: 8px;
-      background: #0b0b0d;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-      font-size: 0.85rem;
-    }
-    .border-option.selected {
-      border-color: white;
-      box-shadow: 0 0 8px rgba(255,255,255,0.5);
-    }
-    .preview-box {
-      margin-top: 1rem;
-      padding: 0.8rem;
-      background: #0b0b0d;
-      text-align: center;
-      font-size: 1rem;
-    }
-  </style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>chat</title>
+	<style>
+		@font-face {
+			font-family: 'PerfectDOS';
+			src: url('./PerfectDosVga.ttf') format('truetype');
+		}
+		* { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
+		html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
+		
+		body {
+			border: 1px solid hsl(180,100%,50%);
+			box-sizing: border-box;
+		}
+		
+		.login-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(11,11,13,0.5);
+			backdrop-filter: blur(8px);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+			gap: 20px;
+			z-index: 100;
+		}
+		.login-overlay h1 { color: hsl(180,100%,50%); font-size: 2rem; }
+		.login-form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+		.login-input {
+			background: #0b0b0d;
+			color: hsl(180,100%,50%);
+			border: 2px solid hsl(180,100%,50%);
+			padding: 12px;
+			font-size: 16px;
+			outline: none;
+		}
+		.login-input::placeholder { color: hsl(180,100%,30%); }
+		.login-btn {
+			background: hsl(180,100%,50%);
+			color: #0b0b0d;
+			padding: 12px 24px;
+			border: none;
+			font-size: 16px;
+			cursor: pointer;
+		}
+		.toggle-link {
+			color: hsl(180,100%,50%);
+			text-align: center;
+			cursor: pointer;
+			font-size: 0.9rem;
+		}
+		
+		.chat-app { 
+			display: flex; 
+			flex-direction: column; 
+			height: 100vh;
+			overflow: hidden;
+		}
+		.floating-controls {
+			position: fixed;
+			top: 1rem;
+			left: 1rem;
+			display: flex;
+			gap: 10px;
+			z-index: 1000;
+		}
+		.username, .logout-btn { 
+			padding: 8px 16px;
+			background: rgba(11,11,13,0.9);
+			border: 2px solid;
+			backdrop-filter: blur(10px);
+			cursor: pointer;
+		}
+		.username { color: hsl(180,100%,50%); border-color: hsl(180,100%,50%); }
+		.logout-btn { color: hsl(0,100%,50%); border-color: hsl(0,100%,50%); }
+		
+		.messages {
+			flex: 1;
+			padding: 1rem;
+			padding-top: 4rem;
+			overflow-y: scroll;
+			overflow-x: hidden;
+			min-height: 0;
+			-webkit-overflow-scrolling: touch;
+		}
+		.messages::-webkit-scrollbar {
+			width: 1ch;
+		}
+		.messages::-webkit-scrollbar-track {
+			background: #0b0b0d;
+		}
+		.messages::-webkit-scrollbar-thumb {
+			background: hsl(180,100%,50%);
+		}
+		.messages-wrapper {
+			display: flex;
+			flex-direction: column;
+			min-height: min-content;
+		}
+		.message {
+			position: relative;
+			font-size: 1.5rem;
+			padding: 0.5rem 1rem;
+			margin: 0.6rem 0;
+			max-width: 60%;
+			align-self: flex-end;
+			background: #0b0b0d;
+			border: 2px solid;
+			cursor: pointer;
+			transition: transform 0.1s;
+		}
+		.message:hover { transform: translateX(-2px); }
+		.message .name, .message .time { position: absolute; background: #0b0b0d; }
+		.message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
+		.message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
+		
+		.input-area { border-top: 2px solid #333; display: flex; }
+		.input-area input {
+			flex: 1;
+			padding: 1rem;
+			font-size: 1.5rem;
+			background: #0b0b0d;
+			color: hsl(var(--user-color, 180),100%,50%);
+			border: none;
+			outline: none;
+		}
+		.send-btn {
+			padding: 1rem 1.5rem;
+			font-size: 1.5rem;
+			background: #0b0b0d;
+			color: white;
+			border: none;
+			border-left: 2px solid #333;
+			cursor: pointer;
+		}
+		
+		.modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(11,11,13,0.5);
+			backdrop-filter: blur(8px);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 2000;
+		}
+		.modal-content {
+			background: #0b0b0d;
+			border: 2px solid white;
+			padding: 2rem;
+			min-width: 300px;
+			max-width: 500px;
+			width: 90%;
+			max-height: 80vh;
+			overflow-y: auto;
+		}
+		.modal-header {
+			color: white;
+			font-size: 1.5rem;
+			margin-bottom: 1rem;
+			display: flex;
+			justify-content: space-between;
+		}
+		.modal input, .modal textarea {
+			width: 100%;
+			background: #0b0b0d;
+			color: white;
+			border: 2px solid #666;
+			padding: 12px;
+			font-size: 16px;
+			outline: none;
+			margin: 10px 0;
+		}
+		.modal textarea { color: white; min-height: 100px; resize: vertical; }
+		.modal textarea:read-only { 
+			opacity: 0.7;
+			cursor: not-allowed;
+		}
+		.modal button {
+			background: white;
+			color: #0b0b0d;
+			padding: 12px;
+			border: none;
+			cursor: pointer;
+			width: 100%;
+			font-size: 16px;
+			margin-top: 10px;
+		}
+		.close-btn {
+			background: transparent !important;
+			color: hsl(0,100%,50%) !important;
+			border: 2px solid hsl(0,100%,50%) !important;
+			padding: 4px 12px !important;
+			width: auto !important;
+			margin: 0 !important;
+		}
+		.error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
+		
+		.style-section { margin-top: 1.5rem; }
+		.style-label {
+			color: white;
+			font-size: 1rem;
+			margin-bottom: 0.8rem;
+			display: block;
+		}
+		.color-grid {
+			display: grid;
+			grid-template-columns: repeat(12, 1fr);
+			gap: 6px;
+			margin-bottom: 1rem;
+		}
+		.color-option {
+			aspect-ratio: 1;
+			border: 2px solid transparent;
+			cursor: pointer;
+			transition: all 0.2s;
+			width: 100%;
+			height: 100%;
+		}
+		.color-option.selected {
+			border-color: white;
+			box-shadow: 0 0 8px rgba(255,255,255,0.5);
+		}
+		.border-options { display: flex; gap: 8px; }
+		.border-option {
+			flex: 1;
+			padding: 8px;
+			background: #0b0b0d;
+			cursor: pointer;
+			text-align: center;
+			transition: all 0.2s;
+			font-size: 0.85rem;
+		}
+		.border-option.selected {
+			border-color: white;
+			box-shadow: 0 0 8px rgba(255,255,255,0.5);
+		}
+		.preview-box {
+			margin-top: 1rem;
+			padding: 0.8rem;
+			background: #0b0b0d;
+			text-align: center;
+			font-size: 1rem;
+		}
+	</style>
 </head>
 <body>
-  <div id="app">
-    <div class="chat-app">
-      <div class="messages" id="messages">
-        <div class="messages-wrapper" id="messagesWrapper"></div>
-      </div>
-      <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Type...">
-        <button class="send-btn" id="sendBtn">SEND</button>
-      </div>
-    </div>
-  </div>
+	<div id="app">
+		<div class="chat-app">
+			<div class="messages" id="messages">
+				<div class="messages-wrapper" id="messagesWrapper"></div>
+			</div>
+			<div class="input-area">
+				<input type="text" id="messageInput" placeholder="Type...">
+				<button class="send-btn" id="sendBtn">SEND</button>
+			</div>
+		</div>
+	</div>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
-    import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+	<script type="module">
+		import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+		import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+		import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
-    const app = initializeApp({
-      apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
-      authDomain: "social-e02b4.firebaseapp.com",
-      databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
-      projectId: "social-e02b4",
-      storageBucket: "social-e02b4.firebasestorage.app",
-      messagingSenderId: "64302705629",
-      appId: "1:64302705629:web:9090276dba0418cee6e434"
-    });
+		const app = initializeApp({
+			apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
+			authDomain: "social-e02b4.firebaseapp.com",
+			databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
+			projectId: "social-e02b4",
+			storageBucket: "social-e02b4.firebasestorage.app",
+			messagingSenderId: "64302705629",
+			appId: "1:64302705629:web:9090276dba0418cee6e434"
+		});
 
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const COLORS = [180, 210, 240, 270, 300, 330, 0, 30, 60, 90, 120, 150];
+		const auth = getAuth(app);
+		const db = getDatabase(app);
+		const COLORS = [180, 210, 240, 270, 300, 330, 0, 30, 60, 90, 120, 150];
 
-    let state = {
-      user: null,
-      username: '',
-      color: '180',
-      borderStyle: 'solid',
-      about: '',
-      input: '',
-      showProfile: false,
-      profileUid: null,
-      profileData: null,
-      showUsernamePrompt: false,
-      usernameInput: '',
-      isSignUp: false,
-      loginEmail: '',
-      loginPassword: '',
-      error: '',
-      pendingUser: null,
-      lastAnimatedId: null
-    };
+		let state = {
+			user: null,
+			username: '',
+			color: '180',
+			borderStyle: 'solid',
+			about: '',
+			input: '',
+			showProfile: false,
+			profileUid: null,
+			profileData: null,
+			showUsernamePrompt: false,
+			usernameInput: '',
+			isSignUp: false,
+			loginEmail: '',
+			loginPassword: '',
+			error: '',
+			pendingUser: null,
+			lastAnimatedId: null
+		};
 
-    const messages = [];
-    const loadedIds = new Set();
-    const typingSound = new Audio('./sounds/terminal_cursor.wav');
-    const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
+		const messages = [];
+		const loadedIds = new Set();
+		const typingSound = new Audio('./sounds/terminal_cursor.wav');
+		const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
 
-    // Setup input handlers once
-    document.getElementById('messageInput').oninput = e => state.input = e.target.value;
-    document.getElementById('messageInput').onkeypress = e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    };
-    document.getElementById('sendBtn').onclick = sendMessage;
+		// Setup input handlers once
+		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
+		document.getElementById('messageInput').onkeypress = e => {
+			if (e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				sendMessage();
+			}
+		};
+		document.getElementById('sendBtn').onclick = sendMessage;
 
-    // Listen to messages
-    onChildAdded(ref(db, 'messages'), snapshot => {
-      const id = snapshot.key;
-      if (loadedIds.has(id)) return;
-      loadedIds.add(id);
+		// Listen to messages
+		onChildAdded(ref(db, 'messages'), snapshot => {
+			const id = snapshot.key;
+			if (loadedIds.has(id)) return;
+			loadedIds.add(id);
 
-      messages.push({ id, ...snapshot.val() });
-      if (messages.length > 15) messages.shift();
+			messages.push({ id, ...snapshot.val() });
+			if (messages.length > 15) messages.shift();
 
-      // Always animate new messages (not just the last one sent by current user)
-      addMessageToDOM({ id, ...snapshot.val() }, true);
-    });
+			// Always animate new messages (not just the last one sent by current user)
+			addMessageToDOM({ id, ...snapshot.val() }, true);
+		});
 
-    function addMessageToDOM(msg, animate) {
-      const container = document.getElementById('messagesWrapper');
-      if (!container) return;
+		function addMessageToDOM(msg, animate) {
+			const container = document.getElementById('messagesWrapper');
+			if (!container) return;
 
-      while (container.children.length >= 15) {
-        container.removeChild(container.firstChild);
-      }
+			while (container.children.length >= 15) {
+				container.removeChild(container.firstChild);
+			}
 
-      const el = document.createElement('div');
-      el.className = 'message';
-      const light = `hsl(${msg.color},100%,50%)`;
-      const dark = `hsl(${msg.color},100%,30%)`;
-      el.style.color = light;
-      el.style.borderColor = dark;
-      el.style.borderStyle = msg.borderStyle;
-      el.onclick = () => openProfile(msg.userId);
-      el.innerHTML = `
-        <span class="name" style="color:${dark}"></span>
-        <span class="text"></span>
-        <span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
-      `;
-      container.appendChild(el);
+			const el = document.createElement('div');
+			el.className = 'message';
+			const light = `hsl(${msg.color},100%,50%)`;
+			const dark = `hsl(${msg.color},100%,30%)`;
+			el.style.color = light;
+			el.style.borderColor = dark;
+			el.style.borderStyle = msg.borderStyle;
+			el.onclick = () => openProfile(msg.userId);
+			el.innerHTML = `
+				<span class="name" style="color:${dark}"></span>
+				<span class="text"></span>
+				<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
+			`;
+			container.appendChild(el);
 
-      if (animate && state.user) {
-        animateMessage(el, msg.userName, msg.text);
-      } else {
-        el.querySelector('.name').textContent = msg.userName;
-        el.querySelector('.text').textContent = msg.text;
-      }
+			if (animate && state.user) {
+				animateMessage(el, msg.userName, msg.text);
+			} else {
+				el.querySelector('.name').textContent = msg.userName;
+				el.querySelector('.text').textContent = msg.text;
+			}
 
-      const messagesContainer = document.getElementById('messages');
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    }
+			const messagesContainer = document.getElementById('messages');
+			if (messagesContainer) {
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}
+		}
 
-    function animateMessage(el, userName, text) {
-      const nameEl = el.querySelector('.name');
-      const textEl = el.querySelector('.text');
-      let ni = 0, ti = 0;
-      function type() {
-        let typed = false;
-        if (ni < userName.length) {
-          nameEl.textContent += userName[ni++];
-          typed = true;
-        }
-        if (ti < text.length) {
-          textEl.textContent += text[ti++];
-          typed = true;
-        }
-        
-        if (typed) {
-          // Play typing sound on each character
-          typingSound.currentTime = 0;
-          typingSound.play().catch(() => {}); // Ignore errors if sound fails
-        }
-        
-        document.getElementById('messages').scrollTop = 9999;
-        
-        if (ni < userName.length || ti < text.length) {
-          setTimeout(type, 80);
-        } else {
-          // Message finished - play completion sound
-          finishSound.currentTime = 0;
-          finishSound.play().catch(() => {});
-        }
-      }
-      type();
-    }
+		function animateMessage(el, userName, text) {
+			const nameEl = el.querySelector('.name');
+			const textEl = el.querySelector('.text');
+			let ni = 0, ti = 0;
+			function type() {
+				let typed = false;
+				if (ni < userName.length) {
+					nameEl.textContent += userName[ni++];
+					typed = true;
+				}
+				if (ti < text.length) {
+					textEl.textContent += text[ti++];
+					typed = true;
+				}
+				
+				if (typed) {
+					// Play typing sound on each character
+					typingSound.currentTime = 0;
+					typingSound.play().catch(() => {}); // Ignore errors if sound fails
+				}
+				
+				document.getElementById('messages').scrollTop = 9999;
+				
+				if (ni < userName.length || ti < text.length) {
+					setTimeout(type, 80);
+				} else {
+					// Message finished - play completion sound
+					finishSound.currentTime = 0;
+					finishSound.play().catch(() => {});
+				}
+			}
+			type();
+		}
 
-    function formatTime(ts) {
-      const d = new Date(ts);
-      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    }
+		function formatTime(ts) {
+			const d = new Date(ts);
+			return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+		}
 
-    async function sendMessage() {
-      if (!state.user || !state.input.trim()) return;
-      const msgRef = await push(ref(db, 'messages'), {
-        userId: state.user.uid,
-        userName: state.username,
-        text: state.input.trim(),
-        timestamp: Date.now(),
-        color: state.color,
-        borderStyle: state.borderStyle
-      });
-      state.lastAnimatedId = msgRef.key;
-      state.input = '';
-      document.getElementById('messageInput').value = '';
-    }
+		async function sendMessage() {
+			if (!state.user || !state.input.trim()) return;
+			const msgRef = await push(ref(db, 'messages'), {
+				userId: state.user.uid,
+				userName: state.username,
+				text: state.input.trim(),
+				timestamp: Date.now(),
+				color: state.color,
+				borderStyle: state.borderStyle
+			});
+			state.lastAnimatedId = msgRef.key;
+			state.input = '';
+			document.getElementById('messageInput').value = '';
+		}
 
-    async function openProfile(uid) {
-      const userRef = ref(db, `users/${uid}`);
-      const snap = await get(userRef);
-      const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
-      state.profileUid = uid;
-      state.profileData = data;
-      if (uid === state.user?.uid) {
-        state.color = data.color || '0';
-        state.borderStyle = data.borderStyle || 'solid';
-      }
-      state.showProfile = true;
-      renderOverlay();
-    }
+		async function openProfile(uid) {
+			const userRef = ref(db, `users/${uid}`);
+			const snap = await get(userRef);
+			const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
+			state.profileUid = uid;
+			state.profileData = data;
+			if (uid === state.user?.uid) {
+				state.color = data.color || '0';
+				state.borderStyle = data.borderStyle || 'solid';
+			}
+			state.showProfile = true;
+			renderOverlay();
+		}
 
-    async function saveProfile() {
-      if (!state.user) return;
-      const userRef = ref(db, `users/${state.user.uid}`);
-      const snap = await get(userRef);
-      await set(userRef, { 
-        ...snap.val(), 
-        about: state.profileData.about
-      });
-      state.showProfile = false;
-      renderOverlay();
-    }
+		async function saveProfile() {
+			if (!state.user) return;
+			const userRef = ref(db, `users/${state.user.uid}`);
+			const snap = await get(userRef);
+			await set(userRef, { 
+				...snap.val(), 
+				about: state.profileData.about
+			});
+			state.showProfile = false;
+			renderOverlay();
+		}
 
-    async function handleAuth() {
-      const email = state.loginEmail.trim();
-      const pw = state.loginPassword.trim();
-      if (!email || !pw) {
-        state.error = 'Enter email and password';
-        renderOverlay();
-        return;
-      }
-      try {
-        if (state.isSignUp) {
-          const cred = await createUserWithEmailAndPassword(auth, email, pw);
-          state.pendingUser = cred.user;
-          state.usernameInput = '';
-          state.showUsernamePrompt = true;
-        } else {
-          await signInWithEmailAndPassword(auth, email, pw);
-        }
-        state.error = '';
-        renderOverlay();
-      } catch (err) {
-        state.error = err.code === 'auth/email-already-in-use' ? 'Email taken' :
-                      err.code === 'auth/weak-password' ? 'Password too weak' :
-                      err.code === 'auth/user-not-found' ? 'User not found' :
-                      err.code === 'auth/wrong-password' ? 'Wrong password' : 'Auth failed';
-        renderOverlay();
-      }
-    }
+		async function handleAuth() {
+			const email = state.loginEmail.trim();
+			const pw = state.loginPassword.trim();
+			if (!email || !pw) {
+				state.error = 'Enter email and password';
+				renderOverlay();
+				return;
+			}
+			try {
+				if (state.isSignUp) {
+					const cred = await createUserWithEmailAndPassword(auth, email, pw);
+					state.pendingUser = cred.user;
+					state.usernameInput = '';
+					state.showUsernamePrompt = true;
+				} else {
+					await signInWithEmailAndPassword(auth, email, pw);
+				}
+				state.error = '';
+				renderOverlay();
+			} catch (err) {
+				state.error = err.code === 'auth/email-already-in-use' ? 'Email taken' :
+											err.code === 'auth/weak-password' ? 'Password too weak' :
+											err.code === 'auth/user-not-found' ? 'User not found' :
+											err.code === 'auth/wrong-password' ? 'Wrong password' : 'Auth failed';
+				renderOverlay();
+			}
+		}
 
-    async function confirmUsername() {
-      const un = state.usernameInput.trim();
-      if (!un) return;
-      const lower = un.toLowerCase();
-      const snap = await get(ref(db, 'claimedUsernames'));
-      const existing = snap.val() || {};
-      if (existing[lower] && existing[lower] !== state.pendingUser.uid) {
-        state.error = 'Username taken';
-        renderOverlay();
-        return;
-      }
-      await set(ref(db, `claimedUsernames/${lower}`), state.pendingUser.uid);
-      await set(ref(db, `users/${state.pendingUser.uid}`), {
-        username: un,
-        about: state.about,
-        color: state.color,
-        borderStyle: state.borderStyle
-      });
-      state.user = state.pendingUser;
-      state.username = un;
-      state.showUsernamePrompt = false;
-      state.pendingUser = null;
-      state.error = '';
-      state.about = '';
-      renderOverlay();
-    }
+		async function confirmUsername() {
+			const un = state.usernameInput.trim();
+			if (!un) return;
+			const lower = un.toLowerCase();
+			const snap = await get(ref(db, 'claimedUsernames'));
+			const existing = snap.val() || {};
+			if (existing[lower] && existing[lower] !== state.pendingUser.uid) {
+				state.error = 'Username taken';
+				renderOverlay();
+				return;
+			}
+			await set(ref(db, `claimedUsernames/${lower}`), state.pendingUser.uid);
+			await set(ref(db, `users/${state.pendingUser.uid}`), {
+				username: un,
+				about: state.about,
+				color: state.color,
+				borderStyle: state.borderStyle
+			});
+			state.user = state.pendingUser;
+			state.username = un;
+			state.showUsernamePrompt = false;
+			state.pendingUser = null;
+			state.error = '';
+			state.about = '';
+			renderOverlay();
+		}
 
-    function renderOverlay() {
-      const existing = document.getElementById('overlay');
-      if (existing) existing.remove();
+		function renderOverlay() {
+			const existing = document.getElementById('overlay');
+			if (existing) existing.remove();
 
-      if (state.showUsernamePrompt) {
-        const div = document.createElement('div');
-        div.id = 'overlay';
-        div.className = 'modal';
-        div.innerHTML = `
-          <div class="modal-content">
-            <div class="modal-header">CLAIM USERNAME</div>
-            ${state.error ? `<div class="error">${state.error}</div>` : ''}
-            <input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username" autocomplete="off">
-            <div style="color:white;margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
-            <input id="aboutInput" type="text" maxlength="100" placeholder="Tell us about yourself..." style="margin:0;color:white" value="${state.about}">
-            <div class="style-section">
-              <span class="style-label">COLOR</span>
-              <div class="color-grid" id="colorGrid">
-                ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
-              </div>
-              <span class="style-label">BORDER</span>
-              <div class="border-options">
-                ${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
-              </div>
-            </div>
-            <button id="confirmBtn">CONFIRM</button>
-          </div>
-        `;
-        document.body.appendChild(div);
-        const input = document.getElementById('unInput');
-        input.focus();
-        input.oninput = e => state.usernameInput = e.target.value;
-        input.onkeypress = e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            confirmUsername();
-          }
-        };
-        document.getElementById('aboutInput').oninput = e => state.about = e.target.value;
-        document.querySelectorAll('.color-option').forEach(el => {
-          el.onclick = () => {
-            state.color = el.dataset.color;
-            renderOverlay();
-          };
-        });
-        document.querySelectorAll('.border-option').forEach(el => {
-          el.onclick = () => {
-            state.borderStyle = el.dataset.style;
-            renderOverlay();
-          };
-        });
-        document.getElementById('confirmBtn').onclick = confirmUsername;
-        return;
-      }
+			if (state.showUsernamePrompt) {
+				const div = document.createElement('div');
+				div.id = 'overlay';
+				div.className = 'modal';
+				div.innerHTML = `
+					<div class="modal-content">
+						<div class="modal-header">CLAIM USERNAME</div>
+						${state.error ? `<div class="error">${state.error}</div>` : ''}
+						<input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username" autocomplete="off">
+						<div style="color:white;margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
+						<input id="aboutInput" type="text" maxlength="100" placeholder="Tell us about yourself..." style="margin:0;color:white" value="${state.about}">
+						<div class="style-section">
+							<span class="style-label">COLOR</span>
+							<div class="color-grid" id="colorGrid">
+								${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
+							</div>
+							<span class="style-label">BORDER</span>
+							<div class="border-options">
+								${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
+							</div>
+						</div>
+						<button id="confirmBtn">CONFIRM</button>
+					</div>
+				`;
+				document.body.appendChild(div);
+				const input = document.getElementById('unInput');
+				input.focus();
+				input.oninput = e => state.usernameInput = e.target.value;
+				input.onkeypress = e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						confirmUsername();
+					}
+				};
+				document.getElementById('aboutInput').oninput = e => state.about = e.target.value;
+				document.querySelectorAll('.color-option').forEach(el => {
+					el.onclick = () => {
+						state.color = el.dataset.color;
+						renderOverlay();
+					};
+				});
+				document.querySelectorAll('.border-option').forEach(el => {
+					el.onclick = () => {
+						state.borderStyle = el.dataset.style;
+						renderOverlay();
+					};
+				});
+				document.getElementById('confirmBtn').onclick = confirmUsername;
+				return;
+			}
 
-      if (!state.user) {
-        const div = document.createElement('div');
-        div.id = 'overlay';
-        div.className = 'login-overlay';
-        div.innerHTML = `
-          <h1>CHAT</h1>
-          ${state.error ? `<div class="error">${state.error}</div>` : ''}
-          <div class="login-form">
-            <input type="email" id="emailInput" class="login-input" placeholder="Email" value="${state.loginEmail}">
-            <input type="password" id="passwordInput" class="login-input" placeholder="Password" value="${state.loginPassword}">
-            <button class="login-btn" id="authBtn">${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}</button>
-            <div class="toggle-link" id="toggleLink">${state.isSignUp ? 'Already have account? Sign in' : "Don't have account? Sign up"}</div>
-          </div>
-        `;
-        document.body.appendChild(div);
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        
-        // Ensure inputs are editable
-        emailInput.removeAttribute('readonly');
-        passwordInput.removeAttribute('readonly');
-        
-        emailInput.oninput = e => {
-          state.loginEmail = e.target.value;
-        };
-        passwordInput.oninput = e => {
-          state.loginPassword = e.target.value;
-        };
-        passwordInput.onkeypress = e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAuth();
-          }
-        };
-        emailInput.onkeypress = e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            passwordInput.focus();
-          }
-        };
-        document.getElementById('authBtn').onclick = handleAuth;
-        document.getElementById('toggleLink').onclick = () => { 
-          state.isSignUp = !state.isSignUp; 
-          state.error = ''; 
-          renderOverlay(); 
-        };
-        return;
-      }
+			if (!state.user) {
+				const div = document.createElement('div');
+				div.id = 'overlay';
+				div.className = 'login-overlay';
+				div.innerHTML = `
+					<h1>CHAT</h1>
+					${state.error ? `<div class="error">${state.error}</div>` : ''}
+					<div class="login-form">
+						<input type="email" id="emailInput" class="login-input" placeholder="Email" value="${state.loginEmail}">
+						<input type="password" id="passwordInput" class="login-input" placeholder="Password" value="${state.loginPassword}">
+						<button class="login-btn" id="authBtn">${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}</button>
+						<div class="toggle-link" id="toggleLink">${state.isSignUp ? 'Already have account? Sign in' : "Don't have account? Sign up"}</div>
+					</div>
+				`;
+				document.body.appendChild(div);
+				const emailInput = document.getElementById('emailInput');
+				const passwordInput = document.getElementById('passwordInput');
+				
+				// Ensure inputs are editable
+				emailInput.removeAttribute('readonly');
+				passwordInput.removeAttribute('readonly');
+				
+				emailInput.oninput = e => {
+					state.loginEmail = e.target.value;
+				};
+				passwordInput.oninput = e => {
+					state.loginPassword = e.target.value;
+				};
+				passwordInput.onkeypress = e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						handleAuth();
+					}
+				};
+				emailInput.onkeypress = e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						passwordInput.focus();
+					}
+				};
+				document.getElementById('authBtn').onclick = handleAuth;
+				document.getElementById('toggleLink').onclick = () => { 
+					state.isSignUp = !state.isSignUp; 
+					state.error = ''; 
+					renderOverlay(); 
+				};
+				return;
+			}
 
-      if (state.showProfile) {
-        const div = document.createElement('div');
-        div.id = 'overlay';
-        div.className = 'modal';
-        const userColor = `hsl(${state.profileData?.color || '0'},100%,50%)`;
-        div.innerHTML = `
-          <div class="modal-content" style="border-color: ${userColor}">
-            <div class="modal-header" style="color: ${userColor}">
-              <span>${state.profileData?.username || 'User'}</span>
-              <button class="close-btn" id="closeBtn">CLOSE</button>
-            </div>
-            <div style="color:${userColor};margin-bottom:0.5rem">ABOUT ME</div>
-            <textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
-            ${state.profileUid === state.user?.uid ? '<button id="saveBtn" style="background: '+userColor+'; color: #0b0b0d">SAVE</button>' : ''}
-          </div>
-        `;
-        document.body.appendChild(div);
-        div.onclick = e => e.target.id === 'overlay' && (state.showProfile = false, renderOverlay());
-        document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
-        if (state.profileUid === state.user?.uid) {
-          document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
-          document.getElementById('saveBtn').onclick = async () => {
-            if (!state.user) return;
-            const userRef = ref(db, `users/${state.user.uid}`);
-            const snap = await get(userRef);
-            await set(userRef, { ...snap.val(), about: state.profileData.about });
-            state.showProfile = false;
-            renderOverlay();
-          };
-        }
-        return;
-      }
+			if (state.showProfile) {
+				const div = document.createElement('div');
+				div.id = 'overlay';
+				div.className = 'modal';
+				const userColor = `hsl(${state.profileData?.color || '0'},100%,50%)`;
+				div.innerHTML = `
+					<div class="modal-content" style="border-color: ${userColor}">
+						<div class="modal-header" style="color: ${userColor}">
+							<span>${state.profileData?.username || 'User'}</span>
+							<button class="close-btn" id="closeBtn">CLOSE</button>
+						</div>
+						<div style="color:${userColor};margin-bottom:0.5rem">ABOUT ME</div>
+						<textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
+						${state.profileUid === state.user?.uid ? '<button id="saveBtn" style="background: '+userColor+'; color: #0b0b0d">SAVE</button>' : ''}
+					</div>
+				`;
+				document.body.appendChild(div);
+				div.onclick = e => e.target.id === 'overlay' && (state.showProfile = false, renderOverlay());
+				document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
+				if (state.profileUid === state.user?.uid) {
+					document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
+					document.getElementById('saveBtn').onclick = async () => {
+						if (!state.user) return;
+						const userRef = ref(db, `users/${state.user.uid}`);
+						const snap = await get(userRef);
+						await set(userRef, { ...snap.val(), about: state.profileData.about });
+						state.showProfile = false;
+						renderOverlay();
+					};
+				}
+				return;
+			}
 
-      // Logged in - show controls
-      const existing2 = document.getElementById('controls');
-      if (existing2) existing2.remove();
-      const div = document.createElement('div');
-      div.id = 'controls';
-      div.className = 'floating-controls';
-      const userColor = `hsl(${state.color},100%,50%)`;
-      div.innerHTML = `
-        <span class="username" id="usernameBtn" style="color: ${userColor}; border-color: ${userColor}">${state.username}</span>
-        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
-      `;
-      document.body.appendChild(div);
-      document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
-      document.getElementById('logoutBtn').onclick = () => signOut(auth);
-      
-      // Update input color
-      const messageInput = document.getElementById('messageInput');
-      if (messageInput) {
-        messageInput.style.color = userColor;
-      }
-      
-      // Update scrollbar and border color
-      document.body.style.borderColor = userColor;
-      const style = document.createElement('style');
-      style.id = 'dynamic-scrollbar';
-      const existingStyle = document.getElementById('dynamic-scrollbar');
-      if (existingStyle) existingStyle.remove();
-      style.textContent = `.messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
-      document.head.appendChild(style);
-    }
+			// Logged in - show controls
+			const existing2 = document.getElementById('controls');
+			if (existing2) existing2.remove();
+			const div = document.createElement('div');
+			div.id = 'controls';
+			div.className = 'floating-controls';
+			const userColor = `hsl(${state.color},100%,50%)`;
+			div.innerHTML = `
+				<span class="username" id="usernameBtn" style="color: ${userColor}; border-color: ${userColor}">${state.username}</span>
+				<button class="logout-btn" id="logoutBtn">LOGOUT</button>
+			`;
+			document.body.appendChild(div);
+			document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
+			document.getElementById('logoutBtn').onclick = () => signOut(auth);
+			
+			// Update input color
+			const messageInput = document.getElementById('messageInput');
+			if (messageInput) {
+				messageInput.style.color = userColor;
+			}
+			
+			// Update scrollbar and border color
+			document.body.style.borderColor = userColor;
+			const style = document.createElement('style');
+			style.id = 'dynamic-scrollbar';
+			const existingStyle = document.getElementById('dynamic-scrollbar');
+			if (existingStyle) existingStyle.remove();
+			style.textContent = `.messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
+			document.head.appendChild(style);
+		}
 
-    onAuthStateChanged(auth, async user => {
-      if (user) {
-        const snap = await get(ref(db, `users/${user.uid}`));
-        if (!snap.exists() || !snap.val().username) {
-          state.pendingUser = user;
-          state.usernameInput = user.email?.split('@')[0] || '';
-          state.showUsernamePrompt = true;
-        } else {
-          state.user = user;
-          const data = snap.val();
-          state.username = data.username;
-          state.color = data.color || '0';
-          state.borderStyle = data.borderStyle || 'solid';
-          state.showUsernamePrompt = false;
-        }
-      } else {
-        state.user = null;
-        state.username = '';
-      }
-      renderOverlay();
-    });
+		onAuthStateChanged(auth, async user => {
+			if (user) {
+				const snap = await get(ref(db, `users/${user.uid}`));
+				if (!snap.exists() || !snap.val().username) {
+					state.pendingUser = user;
+					state.usernameInput = user.email?.split('@')[0] || '';
+					state.showUsernamePrompt = true;
+				} else {
+					state.user = user;
+					const data = snap.val();
+					state.username = data.username;
+					state.color = data.color || '0';
+					state.borderStyle = data.borderStyle || 'solid';
+					state.showUsernamePrompt = false;
+				}
+			} else {
+				state.user = null;
+				state.username = '';
+			}
+			renderOverlay();
+		});
 
-    renderOverlay();
-  </script>
+		renderOverlay();
+	</script>
 </body>
 </html>
