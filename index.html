@@ -188,39 +188,42 @@
     }
     .color-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
       margin-bottom: 1rem;
     }
     .color-option {
       aspect-ratio: 1;
-      border: 3px solid transparent;
+      border: 2px solid transparent;
       cursor: pointer;
       transition: all 0.2s;
+      width: 100%;
+      height: 100%;
     }
     .color-option.selected {
       border-color: white;
-      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
     }
-    .border-options { display: flex; gap: 10px; }
+    .border-options { display: flex; gap: 8px; }
     .border-option {
       flex: 1;
-      padding: 12px;
+      padding: 8px;
       background: #0b0b0d;
       cursor: pointer;
       text-align: center;
       transition: all 0.2s;
+      font-size: 0.85rem;
     }
     .border-option.selected {
       border-color: white;
-      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
     }
     .preview-box {
       margin-top: 1rem;
-      padding: 1rem;
+      padding: 0.8rem;
       background: #0b0b0d;
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -384,9 +387,7 @@
       const snap = await get(userRef);
       await set(userRef, { 
         ...snap.val(), 
-        about: state.profileData.about,
-        color: state.color,
-        borderStyle: state.borderStyle
+        about: state.profileData.about
       });
       state.showProfile = false;
       renderOverlay();
@@ -462,7 +463,7 @@
             <div class="style-section">
               <span class="style-label">COLOR</span>
               <div class="color-grid" id="colorGrid">
-                ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:3px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
+                ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
               </div>
               <span class="style-label">BORDER</span>
               <div class="border-options">
@@ -474,11 +475,27 @@
           </div>
         `;
         document.body.appendChild(div);
-        document.getElementById('unInput').focus();
-        document.getElementById('unInput').oninput = e => state.usernameInput = e.target.value;
-        document.getElementById('unInput').onkeypress = e => e.key === 'Enter' && confirmUsername();
-        document.querySelectorAll('.color-option').forEach(el => el.onclick = () => { state.color = el.dataset.color; renderOverlay(); });
-        document.querySelectorAll('.border-option').forEach(el => el.onclick = () => { state.borderStyle = el.dataset.style; renderOverlay(); });
+        const input = document.getElementById('unInput');
+        input.focus();
+        input.oninput = e => state.usernameInput = e.target.value;
+        input.onkeypress = e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmUsername();
+          }
+        };
+        document.querySelectorAll('.color-option').forEach(el => {
+          el.onclick = () => {
+            state.color = el.dataset.color;
+            renderOverlay();
+          };
+        });
+        document.querySelectorAll('.border-option').forEach(el => {
+          el.onclick = () => {
+            state.borderStyle = el.dataset.style;
+            renderOverlay();
+          };
+        });
         document.getElementById('confirmBtn').onclick = confirmUsername;
         return;
       }
@@ -517,21 +534,8 @@
               <button class="close-btn" id="closeBtn">CLOSE</button>
             </div>
             <div style="color:hsl(180,100%,50%);margin-bottom:0.5rem">ABOUT ME</div>
-            <textarea id="aboutInput" maxlength="500" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
-            ${state.profileUid === state.user?.uid ? `
-              <div class="style-section">
-                <span class="style-label">COLOR</span>
-                <div class="color-grid">
-                  ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:3px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
-                </div>
-                <span class="style-label">BORDER</span>
-                <div class="border-options">
-                  ${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
-                </div>
-                <div class="preview-box" style="border:2px ${state.borderStyle} hsl(${state.color},100%,30%);color:hsl(${state.color},100%,50%)">PREVIEW</div>
-              </div>
-              <button id="saveBtn">SAVE</button>
-            ` : ''}
+            <textarea id="aboutInput" maxlength="500">${state.profileData?.about || ''}</textarea>
+            ${state.profileUid === state.user?.uid ? '<button id="saveBtn">SAVE</button>' : ''}
           </div>
         `;
         document.body.appendChild(div);
@@ -539,9 +543,14 @@
         document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
         if (state.profileUid === state.user?.uid) {
           document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
-          document.querySelectorAll('.color-option').forEach(el => el.onclick = () => { state.color = el.dataset.color; renderOverlay(); });
-          document.querySelectorAll('.border-option').forEach(el => el.onclick = () => { state.borderStyle = el.dataset.style; renderOverlay(); });
-          document.getElementById('saveBtn').onclick = saveProfile;
+          document.getElementById('saveBtn').onclick = async () => {
+            if (!state.user) return;
+            const userRef = ref(db, `users/${state.user.uid}`);
+            const snap = await get(userRef);
+            await set(userRef, { ...snap.val(), about: state.profileData.about });
+            state.showProfile = false;
+            renderOverlay();
+          };
         }
         return;
       }
