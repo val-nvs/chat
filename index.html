@@ -21,18 +21,37 @@
       gap: 20px;
     }
     .login-screen h1 { color: hsl(180,100%,50%); font-size: 2rem; }
-    .google-btn {
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 300px;
+    }
+    .login-input {
+      background: #0b0b0d;
+      color: hsl(180,100%,50%);
+      border: 2px solid hsl(180,100%,50%);
+      padding: 12px;
+      font-size: 16px;
+      outline: none;
+    }
+    .login-input::placeholder { color: hsl(180,100%,30%); }
+    .login-btn {
       background: hsl(180,100%,50%);
       color: #0b0b0d;
       padding: 12px 24px;
       border: none;
       font-size: 16px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
-    .google-btn:hover { background: hsl(180,100%,40%); }
+    .login-btn:hover { background: hsl(180,100%,40%); }
+    .toggle-link {
+      color: hsl(180,100%,50%);
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .toggle-link:hover { text-decoration: underline; }
     
     .chat-app {
       display: flex;
@@ -151,6 +170,8 @@
       min-width: 300px;
       max-width: 500px;
       width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
     }
     .modal-header {
       color: hsl(180,100%,50%);
@@ -257,7 +278,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
     import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
     const firebaseConfig = {
@@ -273,7 +294,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-    const provider = new GoogleAuthProvider();
 
     const COLORS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
@@ -289,11 +309,16 @@
       profileUid: null,
       showUsernamePrompt: false,
       usernameInput: '',
+      isSignUp: false,
+      loginEmail: '',
+      loginPassword: '',
       error: '',
       pendingUser: null,
       loadedIds: new Set(),
       lastAnimatedId: null
     };
+
+    const renderedMessages = new Set();
 
     function render() {
       const root = document.getElementById('app');
@@ -380,13 +405,45 @@
           <div class="login-screen">
             <h1>CHAT</h1>
             ${state.error ? `<div class="error">${state.error}</div>` : ''}
-            <button class="google-btn" id="googleBtn">
-              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
-              SIGN IN WITH GOOGLE
-            </button>
+            <div class="login-form">
+              <input 
+                type="email" 
+                id="emailInput" 
+                class="login-input" 
+                placeholder="Email"
+                value="${state.loginEmail}"
+              >
+              <input 
+                type="password" 
+                id="passwordInput" 
+                class="login-input" 
+                placeholder="Password"
+                value="${state.loginPassword}"
+              >
+              <button class="login-btn" id="authBtn">
+                ${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}
+              </button>
+              <div class="toggle-link" id="toggleLink">
+                ${state.isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+              </div>
+            </div>
           </div>
         `;
-        document.getElementById('googleBtn').onclick = signInWithGoogle;
+        
+        document.getElementById('emailInput').oninput = e => state.loginEmail = e.target.value;
+        document.getElementById('passwordInput').oninput = e => state.loginPassword = e.target.value;
+        document.getElementById('passwordInput').onkeypress = e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAuth();
+          }
+        };
+        document.getElementById('authBtn').onclick = handleAuth;
+        document.getElementById('toggleLink').onclick = () => {
+          state.isSignUp = !state.isSignUp;
+          state.error = '';
+          render();
+        };
         return;
       }
 
@@ -501,14 +558,11 @@
       renderMessages();
     }
 
-    const renderedMessages = new Set();
-
     function renderMessages() {
       const container = document.getElementById('messages');
       if (!container) return;
 
       state.messages.forEach((msg, idx) => {
-        // Skip if already rendered
         if (renderedMessages.has(msg.id)) {
           return;
         }
@@ -579,11 +633,44 @@
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
-    async function signInWithGoogle() {
+    async function handleAuth() {
+      const email = state.loginEmail.trim();
+      const password = state.loginPassword.trim();
+      
+      if (!email || !password) {
+        state.error = 'Please enter email and password';
+        render();
+        return;
+      }
+
       try {
-        await signInWithPopup(auth, provider);
+        if (state.isSignUp) {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          state.pendingUser = userCredential.user;
+          state.usernameInput = email.split('@')[0];
+          state.showUsernamePrompt = true;
+          state.error = '';
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+          state.error = '';
+        }
+        render();
       } catch (err) {
-        state.error = 'Sign in failed';
+        if (err.code === 'auth/email-already-in-use') {
+          state.error = 'Email already in use';
+        } else if (err.code === 'auth/invalid-email') {
+          state.error = 'Invalid email';
+        } else if (err.code === 'auth/weak-password') {
+          state.error = 'Password too weak (min 6 chars)';
+        } else if (err.code === 'auth/user-not-found') {
+          state.error = 'User not found';
+        } else if (err.code === 'auth/wrong-password') {
+          state.error = 'Wrong password';
+        } else if (err.code === 'auth/invalid-credential') {
+          state.error = 'Invalid credentials';
+        } else {
+          state.error = 'Authentication failed';
+        }
         render();
       }
     }
@@ -634,7 +721,6 @@
       state.lastAnimatedId = messageRef.key;
       state.input = '';
       
-      // Only update the input field, don't re-render everything
       const inputEl = document.getElementById('messageInput');
       if (inputEl) inputEl.value = '';
     }
@@ -657,7 +743,6 @@
 
     function closeProfile() {
       state.showProfile = false;
-      // Reload user data to get current color/border settings
       if (state.user) {
         const userRef = ref(db, `users/${state.user.uid}`);
         get(userRef).then(snapshot => {
@@ -687,11 +772,9 @@
         borderStyle: state.borderStyle
       });
       
-      // Update profile data immediately
       state.profileData.color = state.color;
       state.profileData.borderStyle = state.borderStyle;
       
-      // Clear rendered messages so they re-render with new colors
       renderedMessages.clear();
       const container = document.getElementById('messages');
       if (container) container.innerHTML = '';
@@ -709,7 +792,7 @@
 
         if (!snapshot.exists() || !snapshot.val().username) {
           state.pendingUser = firebaseUser;
-          state.usernameInput = firebaseUser.displayName || '';
+          state.usernameInput = firebaseUser.email?.split('@')[0] || '';
           state.showUsernamePrompt = true;
         } else {
           state.user = firebaseUser;
