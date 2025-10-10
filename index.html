@@ -18,8 +18,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(11,11,13,0.85);
-      backdrop-filter: blur(10px);
+      background: rgba(11,11,13,0.5);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -124,8 +124,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(11,11,13,0.85);
-      backdrop-filter: blur(10px);
+      background: rgba(11,11,13,0.5);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -522,12 +522,27 @@
         document.body.appendChild(div);
         const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
-        emailInput.oninput = e => state.loginEmail = e.target.value;
-        passwordInput.oninput = e => state.loginPassword = e.target.value;
+        
+        // Ensure inputs are editable
+        emailInput.removeAttribute('readonly');
+        passwordInput.removeAttribute('readonly');
+        
+        emailInput.oninput = e => {
+          state.loginEmail = e.target.value;
+        };
+        passwordInput.oninput = e => {
+          state.loginPassword = e.target.value;
+        };
         passwordInput.onkeypress = e => {
           if (e.key === 'Enter') {
             e.preventDefault();
             handleAuth();
+          }
+        };
+        emailInput.onkeypress = e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            passwordInput.focus();
           }
         };
         document.getElementById('authBtn').onclick = handleAuth;
