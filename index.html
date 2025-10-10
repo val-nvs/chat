@@ -12,6 +12,11 @@
     * { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
     
+    body {
+      border: 1px solid hsl(180,100%,50%);
+      box-sizing: border-box;
+    }
+    
     .login-overlay {
       position: fixed;
       top: 0;
@@ -53,11 +58,16 @@
       font-size: 0.9rem;
     }
     
-    .chat-app { display: flex; flex-direction: column; height: 100vh; }
+    .chat-app { 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh;
+      overflow: hidden;
+    }
     .floating-controls {
       position: fixed;
       top: 1rem;
-      right: 1rem;
+      left: 1rem;
       display: flex;
       gap: 10px;
       z-index: 1000;
@@ -74,12 +84,26 @@
     
     .messages {
       flex: 1;
-      padding: 1rem 1rem 1rem 1rem;
+      padding: 1rem;
       padding-top: 4rem;
-      overflow-y: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .messages::-webkit-scrollbar {
+      width: 1ch;
+    }
+    .messages::-webkit-scrollbar-track {
+      background: #0b0b0d;
+    }
+    .messages::-webkit-scrollbar-thumb {
+      background: hsl(180,100%,50%);
+    }
+    .messages-wrapper {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      min-height: min-content;
     }
     .message {
       position: relative;
@@ -104,7 +128,7 @@
       padding: 1rem;
       font-size: 1.5rem;
       background: #0b0b0d;
-      color: white;
+      color: hsl(var(--user-color, 180),100%,50%);
       border: none;
       outline: none;
     }
@@ -112,7 +136,7 @@
       padding: 1rem 1.5rem;
       font-size: 1.5rem;
       background: #0b0b0d;
-      color: hsl(180,100%,50%);
+      color: white;
       border: none;
       border-left: 2px solid #333;
       cursor: pointer;
@@ -133,7 +157,7 @@
     }
     .modal-content {
       background: #0b0b0d;
-      border: 2px solid hsl(180,100%,50%);
+      border: 2px solid white;
       padding: 2rem;
       min-width: 300px;
       max-width: 500px;
@@ -142,7 +166,7 @@
       overflow-y: auto;
     }
     .modal-header {
-      color: hsl(180,100%,50%);
+      color: white;
       font-size: 1.5rem;
       margin-bottom: 1rem;
       display: flex;
@@ -151,16 +175,20 @@
     .modal input, .modal textarea {
       width: 100%;
       background: #0b0b0d;
-      color: hsl(180,100%,50%);
-      border: 2px solid hsl(180,100%,50%);
+      color: white;
+      border: 2px solid #666;
       padding: 12px;
       font-size: 16px;
       outline: none;
       margin: 10px 0;
     }
     .modal textarea { color: white; min-height: 100px; resize: vertical; }
+    .modal textarea:read-only { 
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
     .modal button {
-      background: hsl(180,100%,50%);
+      background: white;
       color: #0b0b0d;
       padding: 12px;
       border: none;
@@ -181,14 +209,14 @@
     
     .style-section { margin-top: 1.5rem; }
     .style-label {
-      color: hsl(180,100%,50%);
+      color: white;
       font-size: 1rem;
       margin-bottom: 0.8rem;
       display: block;
     }
     .color-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(12, 1fr);
       gap: 6px;
       margin-bottom: 1rem;
     }
@@ -230,7 +258,9 @@
 <body>
   <div id="app">
     <div class="chat-app">
-      <div class="messages" id="messages"></div>
+      <div class="messages" id="messages">
+        <div class="messages-wrapper" id="messagesWrapper"></div>
+      </div>
       <div class="input-area">
         <input type="text" id="messageInput" placeholder="Type...">
         <button class="send-btn" id="sendBtn">SEND</button>
@@ -255,12 +285,12 @@
 
     const auth = getAuth(app);
     const db = getDatabase(app);
-    const COLORS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+    const COLORS = [180, 210, 240, 270, 300, 330, 0, 30, 60, 90, 120, 150];
 
     let state = {
       user: null,
       username: '',
-      color: '0',
+      color: '180',
       borderStyle: 'solid',
       about: '',
       input: '',
@@ -279,6 +309,8 @@
 
     const messages = [];
     const loadedIds = new Set();
+    const typingSound = new Audio('./sounds/terminal_cursor.wav');
+    const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
 
     // Setup input handlers once
     document.getElementById('messageInput').oninput = e => state.input = e.target.value;
@@ -299,11 +331,12 @@
       messages.push({ id, ...snapshot.val() });
       if (messages.length > 15) messages.shift();
 
-      addMessageToDOM({ id, ...snapshot.val() }, id === state.lastAnimatedId);
+      // Always animate new messages (not just the last one sent by current user)
+      addMessageToDOM({ id, ...snapshot.val() }, true);
     });
 
     function addMessageToDOM(msg, animate) {
-      const container = document.getElementById('messages');
+      const container = document.getElementById('messagesWrapper');
       if (!container) return;
 
       while (container.children.length >= 15) {
@@ -332,7 +365,10 @@
         el.querySelector('.text').textContent = msg.text;
       }
 
-      container.scrollTop = container.scrollHeight;
+      const messagesContainer = document.getElementById('messages');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
     }
 
     function animateMessage(el, userName, text) {
@@ -340,10 +376,31 @@
       const textEl = el.querySelector('.text');
       let ni = 0, ti = 0;
       function type() {
-        if (ni < userName.length) nameEl.textContent += userName[ni++];
-        if (ti < text.length) textEl.textContent += text[ti++];
+        let typed = false;
+        if (ni < userName.length) {
+          nameEl.textContent += userName[ni++];
+          typed = true;
+        }
+        if (ti < text.length) {
+          textEl.textContent += text[ti++];
+          typed = true;
+        }
+        
+        if (typed) {
+          // Play typing sound on each character
+          typingSound.currentTime = 0;
+          typingSound.play().catch(() => {}); // Ignore errors if sound fails
+        }
+        
         document.getElementById('messages').scrollTop = 9999;
-        if (ni < userName.length || ti < text.length) setTimeout(type, 80);
+        
+        if (ni < userName.length || ti < text.length) {
+          setTimeout(type, 80);
+        } else {
+          // Message finished - play completion sound
+          finishSound.currentTime = 0;
+          finishSound.play().catch(() => {});
+        }
       }
       type();
     }
@@ -406,7 +463,7 @@
         if (state.isSignUp) {
           const cred = await createUserWithEmailAndPassword(auth, email, pw);
           state.pendingUser = cred.user;
-          state.usernameInput = email.split('@')[0];
+          state.usernameInput = '';
           state.showUsernamePrompt = true;
         } else {
           await signInWithEmailAndPassword(auth, email, pw);
@@ -461,9 +518,9 @@
           <div class="modal-content">
             <div class="modal-header">CLAIM USERNAME</div>
             ${state.error ? `<div class="error">${state.error}</div>` : ''}
-            <input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username">
-            <div style="color:hsl(180,100%,50%);margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
-            <textarea id="aboutInput" maxlength="500" placeholder="Tell us about yourself..." style="margin:0">${state.about}</textarea>
+            <input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username" autocomplete="off">
+            <div style="color:white;margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
+            <input id="aboutInput" type="text" maxlength="100" placeholder="Tell us about yourself..." style="margin:0;color:white" value="${state.about}">
             <div class="style-section">
               <span class="style-label">COLOR</span>
               <div class="color-grid" id="colorGrid">
@@ -473,7 +530,6 @@
               <div class="border-options">
                 ${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
               </div>
-              <div class="preview-box" style="border:2px ${state.borderStyle} hsl(${state.color},100%,30%);color:hsl(${state.color},100%,50%)">PREVIEW</div>
             </div>
             <button id="confirmBtn">CONFIRM</button>
           </div>
@@ -566,7 +622,7 @@
               <button class="close-btn" id="closeBtn">CLOSE</button>
             </div>
             <div style="color:${userColor};margin-bottom:0.5rem">ABOUT ME</div>
-            <textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}">${state.profileData?.about || ''}</textarea>
+            <textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
             ${state.profileUid === state.user?.uid ? '<button id="saveBtn" style="background: '+userColor+'; color: #0b0b0d">SAVE</button>' : ''}
           </div>
         `;
@@ -593,13 +649,29 @@
       const div = document.createElement('div');
       div.id = 'controls';
       div.className = 'floating-controls';
+      const userColor = `hsl(${state.color},100%,50%)`;
       div.innerHTML = `
-        <span class="username" id="usernameBtn">${state.username}</span>
+        <span class="username" id="usernameBtn" style="color: ${userColor}; border-color: ${userColor}">${state.username}</span>
         <button class="logout-btn" id="logoutBtn">LOGOUT</button>
       `;
       document.body.appendChild(div);
       document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
       document.getElementById('logoutBtn').onclick = () => signOut(auth);
+      
+      // Update input color
+      const messageInput = document.getElementById('messageInput');
+      if (messageInput) {
+        messageInput.style.color = userColor;
+      }
+      
+      // Update scrollbar and border color
+      document.body.style.borderColor = userColor;
+      const style = document.createElement('style');
+      style.id = 'dynamic-scrollbar';
+      const existingStyle = document.getElementById('dynamic-scrollbar');
+      if (existingStyle) existingStyle.remove();
+      style.textContent = `.messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
+      document.head.appendChild(style);
     }
 
     onAuthStateChanged(auth, async user => {
