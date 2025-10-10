@@ -262,6 +262,7 @@
       username: '',
       color: '0',
       borderStyle: 'solid',
+      about: '',
       input: '',
       showProfile: false,
       profileUid: null,
@@ -435,7 +436,7 @@
       await set(ref(db, `claimedUsernames/${lower}`), state.pendingUser.uid);
       await set(ref(db, `users/${state.pendingUser.uid}`), {
         username: un,
-        about: '',
+        about: state.about,
         color: state.color,
         borderStyle: state.borderStyle
       });
@@ -444,6 +445,7 @@
       state.showUsernamePrompt = false;
       state.pendingUser = null;
       state.error = '';
+      state.about = '';
       renderOverlay();
     }
 
@@ -460,6 +462,8 @@
             <div class="modal-header">CLAIM USERNAME</div>
             ${state.error ? `<div class="error">${state.error}</div>` : ''}
             <input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username">
+            <div style="color:hsl(180,100%,50%);margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
+            <textarea id="aboutInput" maxlength="500" placeholder="Tell us about yourself..." style="margin:0">${state.about}</textarea>
             <div class="style-section">
               <span class="style-label">COLOR</span>
               <div class="color-grid" id="colorGrid">
@@ -484,6 +488,7 @@
             confirmUsername();
           }
         };
+        document.getElementById('aboutInput').oninput = e => state.about = e.target.value;
         document.querySelectorAll('.color-option').forEach(el => {
           el.onclick = () => {
             state.color = el.dataset.color;
