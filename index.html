@@ -1,936 +1,757 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/png" href="favicon.png" />
-		<link rel="manifest" href="manifest.json">
-		<meta name="theme-color" content="#0b0b0d">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-		<meta name="apple-mobile-web-app-title" content="chat">
-		<link rel="apple-touch-icon" href="icon-192.png">
-		<title>chat</title>
-		<style>
-			@font-face {
-				font-family: 'PerfectDOS';
-				src: url('./PerfectDosVga.ttf') format('truetype');
-			}
-			:root {
-				color-scheme: dark;
-			}
-			html, body {
-				height: 100%;
-				margin: 0;
-				overflow: hidden;
-			}
-			* {
-				font-family: 'PerfectDOS', monospace;
-			}
-			body {
-				display: flex;
-				flex-direction: column;
-				background: #0b0b0d;
-				height: 100dvh;
-				position: relative;
-				box-shadow: inset 0 0 0 8px #0b0b0d, inset 0 0 0 10px hsl(330,100%,50%);
-			}
-			.login-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(11, 11, 13, 0.8);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				flex-direction: column;
-				gap: 20px;
-				z-index: 1000;
-			}
-			.login-overlay.hidden {
-				display: none;
-			}
-			.login-overlay h1 {
-				color: hsl(180,100%,50%);
-				font-size: 1.5rem;
-				margin-bottom: 10px;
-			}
-			.username-input {
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-				border: 2px solid hsl(180,100%,50%);
-				padding: 12px 24px;
-				font-size: 16px;
-				outline: none;
-				width: 250px;
-				text-align: center;
-			}
-			.username-input::placeholder {
-				color: hsl(180,100%,30%);
-			}
-			.google-btn, .anon-btn {
-				background: hsl(180,100%,50%);
-				color: #0b0b0d;
-				padding: 12px 24px;
-				border: 2px solid hsl(180,100%,50%);
-				font-size: 16px;
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				gap: 10px;
-				transition: all 0.2s;
-				width: 250px;
-				justify-content: center;
-			}
-			.google-btn:hover, .anon-btn:hover {
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-			}
-			.anon-btn:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
-			.error-message {
-				color: hsl(0,100%,50%);
-				font-size: 0.9rem;
-				text-align: center;
-				max-width: 250px;
-			}
-			.chat-header {
-				padding: 1rem;
-				border-bottom: 2px solid #333;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				flex-wrap: wrap;
-				gap: 10px;
-			}
-			.user-info {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-				color: hsl(180,100%,50%);
-			}
-			.username-display {
-				cursor: pointer;
-				padding: 4px 8px;
-				border: 2px solid transparent;
-				transition: border-color 0.2s;
-			}
-			.username-display:hover {
-				border-color: hsl(180,100%,50%);
-			}
-			.verified-badge {
-				display: none !important;
-			}
-			.username-prompt {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(11, 11, 13, 0.8);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				z-index: 3000;
-			}
-			.username-prompt.hidden {
-				display: none;
-			}
-			.prompt-box {
-				background: #0b0b0d;
-				border: 2px solid hsl(180,100%,50%);
-				padding: 2rem;
-				display: flex;
-				flex-direction: column;
-				gap: 15px;
-				min-width: 300px;
-			}
-			.prompt-title {
-				color: hsl(180,100%,50%);
-				font-size: 1.2rem;
-				text-align: center;
-			}
-			.prompt-input {
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-				border: 2px solid hsl(180,100%,50%);
-				padding: 12px;
-				font-size: 16px;
-				outline: none;
-				text-align: center;
-			}
-			.prompt-buttons {
-				display: flex;
-				gap: 10px;
-			}
-			.prompt-btn {
-				flex: 1;
-				background: hsl(180,100%,50%);
-				color: #0b0b0d;
-				padding: 12px;
-				border: 2px solid hsl(180,100%,50%);
-				font-size: 16px;
-				cursor: pointer;
-				transition: all 0.2s;
-			}
-			.prompt-btn:hover {
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-			}
-			.prompt-btn.cancel {
-				background: transparent;
-				color: hsl(0,100%,50%);
-				border-color: hsl(0,100%,50%);
-			}
-			.prompt-btn.cancel:hover {
-				background: hsl(0,100%,50%);
-				color: #0b0b0d;
-			}
-			.style-controls {
-				display: flex;
-				gap: 10px;
-				align-items: center;
-			}
-			.color-slider, .border-picker {
-				background: transparent;
-				border: 2px solid hsl(180,100%,50%);
-				color: hsl(180,100%,50%);
-				padding: 4px 8px;
-				font-size: 0.9rem;
-				cursor: pointer;
-				outline: none;
-			}
-			.border-picker option {
-				background: #0b0b0d;
-				color: white;
-			}
-			.logout-btn {
-				background: transparent;
-				color: hsl(0,100%,50%);
-				border: 2px solid hsl(0,100%,50%);
-				padding: 4px 12px;
-				font-size: 0.85rem;
-				cursor: pointer;
-				transition: all 0.2s;
-				flex-shrink: 0;
-				white-space: nowrap;
-			}
-			.logout-btn:hover {
-				background: hsl(0,100%,50%);
-				color: #0b0b0d;
-			}
-			.chat-container {
-				flex: 1;
-				padding: 1rem;
-				overflow-y: auto;
-				overflow-x: hidden;
-				min-height: 0;
-				-webkit-overflow-scrolling: touch;
-			}
-			.messages-wrapper {
-				display: flex;
-				flex-direction: column;
-				justify-content: flex-end;
-				min-height: 100%;
-			}
-			.message {
-				align-self: flex-end;
-				position: relative;
-				font-size: 1.5rem;
-				line-height: 1;
-				padding: 0.5rem 1rem;
-				margin: 0.6rem 0;
-				max-width: 60%;
-				word-wrap: break-word;
-				background-color: #0b0b0d;
-				border: 2px solid;
-				border-radius: 0;
-				cursor: pointer;
-				transition: transform 0.1s;
-			}
-			.message:hover {
-				transform: translateX(-2px);
-			}
-			.username {
-				position: absolute;
-				top: -0.6em;
-				left: .6em;
-				font-size: 1.5rem;
-				background: #0b0b0d;
-				padding: 0;
-				border-radius: 0;
-				pointer-events: none;
-			}
-			.clock {
-				position: absolute;
-				bottom: -0.6em;
-				right: .6em;
-				font-size: 1rem;
-				background: #0b0b0d;
-				padding: 0;
-				border-radius: 0;
-				pointer-events: none;
-			}
-			.input-container {
-				width: 100%;
-				border-top: 2px solid #333;
-				display: flex;
-				gap: 0;
-				flex-shrink: 0;
-				min-width: 0;
-			}
-			.chat-input {
-				flex: 1;
-				padding: 1rem;
-				font-size: 1.5rem;
-				background: #0b0b0d;
-				color: white;
-				border: none;
-				outline: none;
-				box-sizing: border-box;
-				resize: none;
-				min-height: 50px;
-				min-width: 0;
-			}
-			.send-btn {
-				padding: 1rem 1.5rem;
-				font-size: 1.5rem;
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-				border: none;
-				border-left: 2px solid #333;
-				cursor: pointer;
-				transition: all 0.2s;
-				flex-shrink: 0;
-				white-space: nowrap;
-				min-width: fit-content;
-			}
-			.send-btn:hover {
-				background: hsl(180,100%,50%);
-				color: #0b0b0d;
-			}
-			.profile-modal {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(11, 11, 13, 0.8);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				z-index: 2000;
-			}
-			.profile-modal.hidden {
-				display: none;
-			}
-			.profile-content {
-				background: #0b0b0d;
-				border: 2px solid hsl(180,100%,50%);
-				padding: 2rem;
-				max-width: 500px;
-				width: 90%;
-				max-height: 80vh;
-				overflow-y: auto;
-			}
-			.profile-header {
-				color: hsl(180,100%,50%);
-				font-size: 1.5rem;
-				margin-bottom: 1rem;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-			.close-btn {
-				background: transparent;
-				color: hsl(0,100%,50%);
-				border: 2px solid hsl(0,100%,50%);
-				padding: 4px 12px;
-				font-size: 0.85rem;
-				cursor: pointer;
-			}
-			.close-btn:hover {
-				background: hsl(0,100%,50%);
-				color: #0b0b0d;
-			}
-			.profile-section {
-				margin-top: 1rem;
-			}
-			.profile-label {
-				color: hsl(180,100%,50%);
-				font-size: 1rem;
-				margin-bottom: 0.5rem;
-			}
-			.profile-textarea {
-				width: 100%;
-				background: #0b0b0d;
-				color: white;
-				border: 2px solid hsl(180,100%,50%);
-				padding: 0.5rem;
-				font-size: 1rem;
-				outline: none;
-				resize: vertical;
-				min-height: 100px;
-				box-sizing: border-box;
-			}
-			.profile-textarea:read-only {
-				opacity: 0.7;
-			}
-			.save-btn {
-				background: hsl(180,100%,50%);
-				color: #0b0b0d;
-				border: 2px solid hsl(180,100%,50%);
-				padding: 8px 16px;
-				font-size: 1rem;
-				cursor: pointer;
-				margin-top: 1rem;
-				width: 100%;
-			}
-			.save-btn:hover {
-				background: #0b0b0d;
-				color: hsl(180,100%,50%);
-			}
-		</style>
-	</head>
-	<body>
-		<div class="chat-header">
-			<div class="user-info">
-				<span class="username-display" id="usernameDisplay" onclick="openMyProfile()"></span>
-			</div>
-			<div class="style-controls">
-				<input type="range" class="color-slider" id="colorSlider" min="0" max="360" value="180">
-				<select class="border-picker" id="borderPicker">
-					<option value="solid" selected>Solid</option>
-					<option value="dashed">Dashed</option>
-					<option value="dotted">Dotted</option>
-				</select>
-				<button class="logout-btn" id="logoutBtn" onclick="signOut()">LOGOUT</button>
-			</div>
-		</div>
-		
-		<div class="chat-container" id="chatContainer">
-			<div class="messages-wrapper" id="messagesWrapper"></div>
-		</div>
-		
-		<div class="input-container">
-			<input type="text" class="chat-input" id="messageInput" placeholder="Type...">
-			<button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND</button>
-		</div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>chat</title>
+  <style>
+    @font-face {
+      font-family: 'PerfectDOS';
+      src: url('./PerfectDosVga.ttf') format('truetype');
+    }
+    * { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
+    
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .login-screen h1 { color: hsl(180,100%,50%); font-size: 2rem; }
+    .google-btn {
+      background: hsl(180,100%,50%);
+      color: #0b0b0d;
+      padding: 12px 24px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .google-btn:hover { background: hsl(180,100%,40%); }
+    
+    .chat-app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .floating-controls {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .username { 
+      color: hsl(180,100%,50%); 
+      cursor: pointer; 
+      padding: 8px 16px;
+      background: rgba(11,11,13,0.9);
+      border: 2px solid hsl(180,100%,50%);
+      backdrop-filter: blur(10px);
+    }
+    .username:hover { 
+      background: hsl(180,100%,50%);
+      color: #0b0b0d;
+    }
+    .logout-btn {
+      background: rgba(11,11,13,0.9);
+      color: hsl(0,100%,50%);
+      border: 2px solid hsl(0,100%,50%);
+      padding: 8px 16px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+    .logout-btn:hover { background: hsl(0,100%,50%); color: #0b0b0d; }
+    
+    .messages {
+      flex: 1;
+      padding: 1rem;
+      padding-top: 4rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .message {
+      position: relative;
+      font-size: 1.5rem;
+      padding: 0.5rem 1rem;
+      margin: 0.6rem 0;
+      max-width: 60%;
+      align-self: flex-end;
+      background: #0b0b0d;
+      border: 2px solid;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .message:hover { transform: translateX(-2px); }
+    .message .name {
+      position: absolute;
+      top: -0.6em;
+      left: .6em;
+      font-size: 1.5rem;
+      background: #0b0b0d;
+    }
+    .message .time {
+      position: absolute;
+      bottom: -0.6em;
+      right: .6em;
+      font-size: 1rem;
+      background: #0b0b0d;
+    }
+    
+    .input-area {
+      border-top: 2px solid #333;
+      display: flex;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 1rem;
+      font-size: 1.5rem;
+      background: #0b0b0d;
+      color: white;
+      border: none;
+      outline: none;
+    }
+    .send-btn {
+      padding: 1rem 1.5rem;
+      font-size: 1.5rem;
+      background: #0b0b0d;
+      color: hsl(180,100%,50%);
+      border: none;
+      border-left: 2px solid #333;
+      cursor: pointer;
+    }
+    .send-btn:hover { background: hsl(180,100%,50%); color: #0b0b0d; }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11,11,13,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal.hidden { display: none; }
+    .modal-content {
+      background: #0b0b0d;
+      border: 2px solid hsl(180,100%,50%);
+      padding: 2rem;
+      min-width: 300px;
+      max-width: 500px;
+      width: 90%;
+    }
+    .modal-header {
+      color: hsl(180,100%,50%);
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .modal input, .modal textarea {
+      width: 100%;
+      background: #0b0b0d;
+      color: hsl(180,100%,50%);
+      border: 2px solid hsl(180,100%,50%);
+      padding: 12px;
+      font-size: 16px;
+      outline: none;
+      margin: 10px 0;
+    }
+    .modal textarea {
+      color: white;
+      min-height: 100px;
+      resize: vertical;
+    }
+    .modal button {
+      background: hsl(180,100%,50%);
+      color: #0b0b0d;
+      padding: 12px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .modal button:hover { background: hsl(180,100%,40%); }
+    .close-btn {
+      background: transparent !important;
+      color: hsl(0,100%,50%) !important;
+      border: 2px solid hsl(0,100%,50%) !important;
+      padding: 4px 12px !important;
+      width: auto !important;
+      margin: 0 !important;
+    }
+    .close-btn:hover { background: hsl(0,100%,50%) !important; color: #0b0b0d !important; }
+    .error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
+    
+    .style-section {
+      margin-top: 1.5rem;
+    }
+    .style-label {
+      color: hsl(180,100%,50%);
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .color-option {
+      aspect-ratio: 1;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+    .color-option.selected {
+      border-color: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    .border-options {
+      display: flex;
+      gap: 10px;
+    }
+    .border-option {
+      flex: 1;
+      padding: 12px;
+      background: #0b0b0d;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .border-option:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .border-option.selected {
+      border-color: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    .preview-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #0b0b0d;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
 
-		<div class="login-overlay" id="loginOverlay">
-			<h1>CHAT</h1>
-			<div class="error-message" id="loginError" style="display: none;"></div>
-			<input type="text" class="username-input" id="anonUsername" placeholder="Enter username" maxlength="20">
-			<button class="anon-btn" id="anonBtn" onclick="signInAnonymously()">JOIN AS GUEST</button>
-			<div style="color: hsl(180,100%,50%); margin: 10px 0;">- OR -</div>
-			<button class="google-btn" onclick="signInWithGoogle()">
-				<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
-				SIGN IN WITH GOOGLE
-			</button>
-		</div>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+    import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
-		<div class="username-prompt hidden" id="usernamePrompt">
-			<div class="prompt-box">
-				<div class="prompt-title">CLAIM USERNAME</div>
-				<input type="text" class="prompt-input" id="promptUsernameInput" placeholder="Enter username" maxlength="20">
-				<div class="prompt-buttons">
-					<button class="prompt-btn cancel" onclick="cancelUsername()">CANCEL</button>
-					<button class="prompt-btn" onclick="confirmUsername()">CONFIRM</button>
-				</div>
-			</div>
-		</div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
+      authDomain: "social-e02b4.firebaseapp.com",
+      databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
+      projectId: "social-e02b4",
+      storageBucket: "social-e02b4.firebasestorage.app",
+      messagingSenderId: "64302705629",
+      appId: "1:64302705629:web:9090276dba0418cee6e434"
+    };
 
-		<div class="profile-modal hidden" id="profileModal">
-			<div class="profile-content">
-				<div class="profile-header">
-					<span id="profileUsername">Profile</span>
-					<button class="close-btn" onclick="closeProfile()">CLOSE</button>
-				</div>
-				<div class="profile-section">
-					<div class="profile-label">ABOUT ME</div>
-					<textarea class="profile-textarea" id="profileAbout" placeholder="Tell us about yourself..." maxlength="500"></textarea>
-				</div>
-				<button class="save-btn" id="saveProfileBtn" onclick="saveProfile()">SAVE</button>
-			</div>
-		</div>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
 
-		<script type="module">
-			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
-			import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously as firebaseSignInAnonymously, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
-			import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+    const COLORS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
-			const firebaseConfig = {
-				apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
-				authDomain: "social-e02b4.firebaseapp.com",
-				databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
-				projectId: "social-e02b4",
-				storageBucket: "social-e02b4.firebasestorage.app",
-				messagingSenderId: "64302705629",
-				appId: "1:64302705629:web:9090276dba0418cee6e434"
-			};
+    let state = {
+      user: null,
+      username: '',
+      color: '0',
+      borderStyle: 'solid',
+      messages: [],
+      input: '',
+      showProfile: false,
+      profileData: null,
+      profileUid: null,
+      showUsernamePrompt: false,
+      usernameInput: '',
+      error: '',
+      pendingUser: null,
+      loadedIds: new Set(),
+      lastAnimatedId: null
+    };
 
-			const app = initializeApp(firebaseConfig);
-			const auth = getAuth(app);
-			const db = getDatabase(app);
-			const provider = new GoogleAuthProvider();
+    function render() {
+      const root = document.getElementById('app');
+      
+      if (state.showUsernamePrompt) {
+        root.innerHTML = `
+          <div class="modal">
+            <div class="modal-content">
+              <div class="modal-header">CLAIM USERNAME</div>
+              ${state.error ? `<div class="error">${state.error}</div>` : ''}
+              <input id="usernameInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Enter username">
+              
+              <div class="style-section">
+                <span class="style-label">MESSAGE COLOR</span>
+                <div class="color-grid" id="colorGrid">
+                  ${COLORS.map(hue => `
+                    <div class="color-option ${state.color == hue ? 'selected' : ''}" 
+                         data-color="${hue}"
+                         style="background: hsl(${hue},100%,50%); border: 3px solid ${state.color == hue ? 'white' : 'hsl(' + hue + ',100%,30%)'};">
+                    </div>
+                  `).join('')}
+                </div>
+                
+                <span class="style-label">BORDER STYLE</span>
+                <div class="border-options">
+                  <div class="border-option ${state.borderStyle === 'solid' ? 'selected' : ''}" 
+                       data-style="solid"
+                       style="border: 2px solid hsl(${state.color},100%,30%);">
+                    SOLID
+                  </div>
+                  <div class="border-option ${state.borderStyle === 'dashed' ? 'selected' : ''}" 
+                       data-style="dashed"
+                       style="border: 2px dashed hsl(${state.color},100%,30%);">
+                    DASHED
+                  </div>
+                  <div class="border-option ${state.borderStyle === 'dotted' ? 'selected' : ''}" 
+                       data-style="dotted"
+                       style="border: 2px dotted hsl(${state.color},100%,30%);">
+                    DOTTED
+                  </div>
+                </div>
+                
+                <div class="preview-box" style="border: 2px ${state.borderStyle} hsl(${state.color},100%,30%); color: hsl(${state.color},100%,50%);">
+                  PREVIEW
+                </div>
+              </div>
+              
+              <button id="confirmBtn">CONFIRM</button>
+            </div>
+          </div>
+        `;
+        const input = document.getElementById('usernameInput');
+        input.oninput = e => {
+          state.usernameInput = e.target.value;
+        };
+        input.onkeypress = e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmUsername();
+          }
+        };
+        input.focus();
+        
+        document.querySelectorAll('.color-option').forEach(el => {
+          el.onclick = () => {
+            state.color = el.dataset.color;
+            render();
+          };
+        });
+        
+        document.querySelectorAll('.border-option').forEach(el => {
+          el.onclick = () => {
+            state.borderStyle = el.dataset.style;
+            render();
+          };
+        });
+        
+        document.getElementById('confirmBtn').onclick = confirmUsername;
+        return;
+      }
+      
+      if (!state.user) {
+        root.innerHTML = `
+          <div class="login-screen">
+            <h1>CHAT</h1>
+            ${state.error ? `<div class="error">${state.error}</div>` : ''}
+            <button class="google-btn" id="googleBtn">
+              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
+              SIGN IN WITH GOOGLE
+            </button>
+          </div>
+        `;
+        document.getElementById('googleBtn').onclick = signInWithGoogle;
+        return;
+      }
 
-			let currentUser = null;
-			let messagesLoaded = false;
-			let userPreferences = {
-				color: '180',
-				borderStyle: 'solid'
-			};
-			let claimedUsernames = {};
-			let pendingGoogleUser = null;
-			let loadedMessageIds = new Set();
-			let lastMessageId = null;
-			let initialLoadComplete = false;
+      root.innerHTML = `
+        <div class="chat-app">
+          <div class="floating-controls">
+            <span class="username" id="usernameBtn">${state.username}</span>
+            <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+          </div>
+          
+          <div class="messages" id="messages"></div>
+          
+          <div class="input-area">
+            <input type="text" id="messageInput" value="${state.input}" placeholder="Type...">
+            <button class="send-btn" id="sendBtn">SEND</button>
+          </div>
+        </div>
 
-			const userColorMap = {};
-			const hueValues = [120, 180, 300, 60, 200, 280, 30, 330];
-			let hueIndex = 0;
+        ${state.showProfile ? `
+          <div class="modal" id="profileModal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <span>${state.profileData?.username || 'User'}</span>
+                <button class="close-btn" id="closeBtn">CLOSE</button>
+              </div>
+              
+              <div style="color: hsl(180,100%,50%); margin-bottom: 0.5rem;">ABOUT ME</div>
+              <textarea id="aboutInput" maxlength="500" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
+              
+              ${state.profileUid === state.user?.uid ? `
+                <div class="style-section">
+                  <span class="style-label">MESSAGE COLOR</span>
+                  <div class="color-grid" id="colorGrid">
+                    ${COLORS.map(hue => `
+                      <div class="color-option ${state.color == hue ? 'selected' : ''}" 
+                           data-color="${hue}"
+                           style="background: hsl(${hue},100%,50%); border: 3px solid ${state.color == hue ? 'white' : 'hsl(' + hue + ',100%,30%)'};">
+                      </div>
+                    `).join('')}
+                  </div>
+                  
+                  <span class="style-label">BORDER STYLE</span>
+                  <div class="border-options">
+                    <div class="border-option ${state.borderStyle === 'solid' ? 'selected' : ''}" 
+                         data-style="solid"
+                         style="border: 2px solid hsl(${state.color},100%,30%);">
+                      SOLID
+                    </div>
+                    <div class="border-option ${state.borderStyle === 'dashed' ? 'selected' : ''}" 
+                         data-style="dashed"
+                         style="border: 2px dashed hsl(${state.color},100%,30%);">
+                      DASHED
+                    </div>
+                    <div class="border-option ${state.borderStyle === 'dotted' ? 'selected' : ''}" 
+                         data-style="dotted"
+                         style="border: 2px dotted hsl(${state.color},100%,30%);">
+                      DOTTED
+                    </div>
+                  </div>
+                  
+                  <div class="preview-box" style="border: 2px ${state.borderStyle} hsl(${state.color},100%,30%); color: hsl(${state.color},100%,50%);">
+                    PREVIEW
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${state.profileUid === state.user?.uid ? '<button id="saveBtn">SAVE</button>' : ''}
+            </div>
+          </div>
+        ` : ''}
+      `;
 
-			function getUserColor(uid) {
-				if (!userColorMap[uid]) {
-					userColorMap[uid] = hueValues[hueIndex % hueValues.length];
-					hueIndex++;
-				}
-				return `hsl(${userColorMap[uid]},100%,50%)`;
-			}
+      document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
+      document.getElementById('logoutBtn').onclick = () => signOut(auth);
+      document.getElementById('messageInput').oninput = e => state.input = e.target.value;
+      document.getElementById('messageInput').onkeypress = e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      };
+      document.getElementById('sendBtn').onclick = sendMessage;
 
-			function showLoginError(message) {
-				const errorEl = document.getElementById('loginError');
-				errorEl.textContent = message;
-				errorEl.style.display = 'block';
-				setTimeout(() => {
-					errorEl.style.display = 'none';
-				}, 5000);
-			}
+      if (state.showProfile) {
+        document.getElementById('profileModal').onclick = e => {
+          if (e.target.id === 'profileModal') closeProfile();
+        };
+        document.getElementById('closeBtn').onclick = closeProfile;
+        if (state.profileUid === state.user?.uid) {
+          document.getElementById('aboutInput').oninput = e => {
+            state.profileData.about = e.target.value;
+          };
+          
+          document.querySelectorAll('.color-option').forEach(el => {
+            el.onclick = () => {
+              state.color = el.dataset.color;
+              render();
+            };
+          });
+          
+          document.querySelectorAll('.border-option').forEach(el => {
+            el.onclick = () => {
+              state.borderStyle = el.dataset.style;
+              render();
+            };
+          });
+          
+          document.getElementById('saveBtn').onclick = saveProfile;
+        }
+      }
 
-			async function loadClaimedUsernames() {
-				try {
-					const usernamesRef = ref(db, 'claimedUsernames');
-					const snapshot = await get(usernamesRef);
-					if (snapshot.exists()) {
-						claimedUsernames = snapshot.val();
-					}
-				} catch (error) {
-					console.error('Error loading usernames:', error);
-				}
-			}
+      renderMessages();
+    }
 
-			window.signInAnonymously = async () => {
-				const username = document.getElementById('anonUsername').value.trim();
-				if (!username) {
-					showLoginError('Please enter a username');
-					return;
-				}
+    const renderedMessages = new Set();
 
-				const lowerUsername = username.toLowerCase();
-				if (claimedUsernames[lowerUsername]) {
-					showLoginError('Username claimed by Google user. Choose another.');
-					return;
-				}
+    function renderMessages() {
+      const container = document.getElementById('messages');
+      if (!container) return;
 
-				try {
-					// Store username BEFORE signing in
-					sessionStorage.setItem('pendingAnonUsername', username);
-					console.log('Pre-storing username:', username);
-					
-					await firebaseSignInAnonymously(auth);
-				} catch (error) {
-					console.error('Error signing in anonymously:', error);
-					showLoginError('Failed to join. Check Firebase settings.');
-					sessionStorage.removeItem('pendingAnonUsername');
-				}
-			};
+      state.messages.forEach((msg, idx) => {
+        // Skip if already rendered
+        if (renderedMessages.has(msg.id)) {
+          return;
+        }
 
-			window.signInWithGoogle = async () => {
-				try {
-					const result = await signInWithPopup(auth, provider);
-					pendingGoogleUser = result.user;
-					
-					// Check if user already has a username
-					const userRef = ref(db, `users/${pendingGoogleUser.uid}`);
-					const snapshot = await get(userRef);
-					
-					if (snapshot.exists() && snapshot.val().username) {
-						// User already exists, no need to prompt
-						return;
-					}
-					
-					// Show custom prompt
-					document.getElementById('promptUsernameInput').value = pendingGoogleUser.displayName || 'User';
-					document.getElementById('usernamePrompt').classList.remove('hidden');
-				} catch (error) {
-					console.error('Error signing in:', error);
-					showLoginError('Sign in failed. Check Firebase settings.');
-				}
-			};
+        renderedMessages.add(msg.id);
 
-			window.confirmUsername = async () => {
-				const username = document.getElementById('promptUsernameInput').value.trim();
-				if (!username) {
-					return;
-				}
+        const el = document.createElement('div');
+        el.className = 'message';
+        el.dataset.id = msg.id;
+        const lightColor = `hsl(${msg.color},100%,50%)`;
+        const darkColor = `hsl(${msg.color},100%,30%)`;
+        
+        el.style.color = lightColor;
+        el.style.borderColor = darkColor;
+        el.style.borderStyle = msg.borderStyle;
+        el.onclick = () => openProfile(msg.userId);
+        
+        el.innerHTML = `
+          <span class="name" style="color: ${darkColor}"></span>
+          <span class="text"></span>
+          <span class="time" style="color: ${darkColor}">${formatTime(msg.timestamp)}</span>
+        `;
+        
+        container.appendChild(el);
 
-				const lowerUsername = username.toLowerCase();
-				
-				try {
-					const usernamesRef = ref(db, 'claimedUsernames');
-					const snapshot = await get(usernamesRef);
-					const existing = snapshot.exists() ? snapshot.val() : {};
-					
-					if (existing[lowerUsername] && existing[lowerUsername] !== pendingGoogleUser.uid) {
-						showLoginError('Username already claimed. Try another.');
-						return;
-					}
+        const shouldAnimate = msg.id === state.lastAnimatedId;
+        
+        if (shouldAnimate) {
+          animateMessage(el, msg.userName, msg.text);
+        } else {
+          el.querySelector('.name').textContent = msg.userName;
+          el.querySelector('.text').textContent = msg.text;
+        }
+      });
 
-					await set(ref(db, `claimedUsernames/${lowerUsername}`), pendingGoogleUser.uid);
-					await set(ref(db, `users/${pendingGoogleUser.uid}`), {
-						username,
-						isVerified: true,
-						about: ''
-					});
-					
-					claimedUsernames[lowerUsername] = pendingGoogleUser.uid;
-					document.getElementById('usernamePrompt').classList.add('hidden');
-					pendingGoogleUser = null;
-				} catch (error) {
-					console.error('Error claiming username:', error);
-					showLoginError('Failed to claim username.');
-				}
-			};
+      container.scrollTop = container.scrollHeight;
+    }
 
-			window.cancelUsername = async () => {
-				document.getElementById('usernamePrompt').classList.add('hidden');
-				if (pendingGoogleUser) {
-					await firebaseSignOut(auth);
-					pendingGoogleUser = null;
-				}
-			};
+    function animateMessage(el, userName, text) {
+      const nameEl = el.querySelector('.name');
+      const textEl = el.querySelector('.text');
+      let nameIdx = 0;
+      let textIdx = 0;
 
-			window.signOut = async () => {
-				try {
-					if (currentUser) {
-						sessionStorage.removeItem('anonUserData_' + currentUser.uid);
-					}
-					await firebaseSignOut(auth);
-				} catch (error) {
-					console.error('Error signing out:', error);
-				}
-			};
+      function type() {
+        if (nameIdx < userName.length) {
+          nameEl.textContent += userName[nameIdx];
+          nameIdx++;
+        }
+        if (textIdx < text.length) {
+          textEl.textContent += text[textIdx];
+          textIdx++;
+        }
+        
+        const container = document.getElementById('messages');
+        if (container) container.scrollTop = container.scrollHeight;
+        
+        if (nameIdx < userName.length || textIdx < text.length) {
+          setTimeout(type, 80);
+        }
+      }
+      
+      type();
+    }
 
-			onAuthStateChanged(auth, async (user) => {
-				if (user) {
-					currentUser = user;
-					document.getElementById('loginOverlay').classList.add('hidden');
-					
-					let username;
-					
-					if (user.isAnonymous) {
-						// Get the pending username and store it permanently
-						const pendingUsername = sessionStorage.getItem('pendingAnonUsername');
-						
-						if (pendingUsername) {
-							username = pendingUsername;
-							const anonData = { username, isAnonymous: true };
-							sessionStorage.setItem('anonUserData_' + user.uid, JSON.stringify(anonData));
-							sessionStorage.removeItem('pendingAnonUsername');
-							console.log('Assigned username:', username, 'to UID:', user.uid);
-						} else {
-							const anonData = JSON.parse(sessionStorage.getItem('anonUserData_' + user.uid) || '{}');
-							username = anonData.username || 'Guest';
-						}
-					} else {
-						const userRef = ref(db, `users/${user.uid}`);
-						const snapshot = await get(userRef);
-						const userData = snapshot.val() || {};
-						username = userData.username || user.displayName || 'User';
-					}
-					
-					document.getElementById('usernameDisplay').textContent = username;
-					
-					const savedPrefs = JSON.parse(sessionStorage.getItem('userPrefs_' + user.uid) || '{}');
-					userPreferences.color = savedPrefs.color || '180';
-					userPreferences.borderStyle = savedPrefs.borderStyle || 'solid';
-					document.getElementById('colorSlider').value = userPreferences.color;
-					document.getElementById('borderPicker').value = userPreferences.borderStyle;
-					
-					if (!messagesLoaded) {
-						loadMessages();
-					}
-				} else {
-					currentUser = null;
-					document.getElementById('loginOverlay').classList.remove('hidden');
-					document.getElementById('usernameDisplay').textContent = 'Guest';
-					sessionStorage.removeItem('pendingAnonUsername');
-					
-					if (!messagesLoaded) {
-						loadMessages();
-					}
-				}
-			});
+    function formatTime(timestamp) {
+      const d = new Date(timestamp);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
 
-			function loadMessages() {
-				const messagesRef = ref(db, 'messages');
-				let messageCount = 0;
-				
-				onChildAdded(messagesRef, (snapshot) => {
-					const messageId = snapshot.key;
-					
-					// Skip if we already loaded this message
-					if (loadedMessageIds.has(messageId)) {
-						return;
-					}
-					
-					loadedMessageIds.add(messageId);
-					const data = snapshot.val();
-					
-					messageCount++;
-					
-					// Only animate if initial load is complete (meaning this is a NEW message)
-					const shouldAnimate = initialLoadComplete;
-					
-					displayMessage(data.userId, data.userName, data.text, data.timestamp, data.color, data.borderStyle, shouldAnimate);
-					
-					// Remove oldest message from DOM if we have more than 15
-					const wrapper = document.getElementById('messagesWrapper');
-					while (wrapper.children.length > 15) {
-						wrapper.removeChild(wrapper.firstChild);
-					}
-					
-					// Mark initial load as complete after first batch
-					if (!initialLoadComplete && messageCount > 0) {
-						setTimeout(() => {
-							initialLoadComplete = true;
-						}, 500);
-					}
-					
-					lastMessageId = messageId;
-				});
-				messagesLoaded = true;
-			}
+    async function signInWithGoogle() {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        state.error = 'Sign in failed';
+        render();
+      }
+    }
 
-			window.sendMessage = () => {
-				if (!currentUser) return;
-				
-				const input = document.getElementById('messageInput');
-				const text = input.value.trim();
-				
-				if (text) {
-					const username = document.getElementById('usernameDisplay').textContent;
-					
-					const messagesRef = ref(db, 'messages');
-					push(messagesRef, {
-						userId: currentUser.uid,
-						userName: username,
-						text: text,
-						timestamp: Date.now(),
-						color: userPreferences.color,
-						borderStyle: userPreferences.borderStyle
-					});
-					input.value = '';
-				}
-			};
+    async function confirmUsername() {
+      const username = state.usernameInput.trim();
+      if (!username) return;
 
-			function displayMessage(uid, userName, text, timestamp, color, borderStyle, isLastMessage = false) {
-				const wrapper = document.getElementById('messagesWrapper');
-				
-				const messageColor = color ? `hsl(${color},100%,50%)` : getUserColor(uid);
-				const messageBorder = borderStyle || 'solid';
-				
-				const now = new Date(timestamp);
-				const hours = String(now.getHours()).padStart(2, '0');
-				const minutes = String(now.getMinutes()).padStart(2, '0');
-				const timeStr = `${hours}:${minutes}`;
-				
-				const msg = document.createElement('div');
-				msg.className = 'message';
-				msg.style.color = messageColor;
-				msg.style.borderColor = messageColor;
-				msg.style.borderStyle = messageBorder;
-				msg.onclick = () => openUserProfile(uid);
-				
-				const usernameSpan = document.createElement('span');
-				usernameSpan.className = 'username';
-				usernameSpan.style.color = messageColor;
-				
-				const textSpan = document.createElement('span');
-				textSpan.className = 'message-text';
-				
-				const clockSpan = document.createElement('span');
-				clockSpan.className = 'clock';
-				clockSpan.style.color = messageColor;
-				clockSpan.textContent = timeStr;
-				
-				msg.appendChild(usernameSpan);
-				msg.appendChild(textSpan);
-				msg.appendChild(clockSpan);
-				
-				wrapper.appendChild(msg);
-				
-				// Only animate the last message
-				if (isLastMessage) {
-					let usernameIndex = 0;
-					let textIndex = 0;
-					const typeSpeed = 80; // milliseconds per character
-					
-					function typeCharacter() {
-						let stillTyping = false;
-						
-						// Type username character
-						if (usernameIndex < userName.length) {
-							usernameSpan.textContent += userName[usernameIndex];
-							usernameIndex++;
-							stillTyping = true;
-						}
-						
-						// Type message text character
-						if (textIndex < text.length) {
-							textSpan.textContent += text[textIndex];
-							textIndex++;
-							stillTyping = true;
-						}
-						
-						// Auto-scroll to bottom during typing
-						const container = document.getElementById('chatContainer');
-						container.scrollTop = container.scrollHeight;
-						
-						if (stillTyping) {
-							setTimeout(typeCharacter, typeSpeed);
-						}
-					}
-					
-					typeCharacter();
-				} else {
-					// Show full text immediately for older messages
-					usernameSpan.textContent = userName;
-					textSpan.textContent = text;
-				}
-				
-				// Initial scroll
-				const container = document.getElementById('chatContainer');
-				container.scrollTop = container.scrollHeight;
-			}
+      const lowerUsername = username.toLowerCase();
+      const usernamesRef = ref(db, 'claimedUsernames');
+      const snapshot = await get(usernamesRef);
+      const existing = snapshot.val() || {};
 
-			window.openMyProfile = () => {
-				if (!currentUser) return;
-				openUserProfile(currentUser.uid);
-			};
+      if (existing[lowerUsername] && existing[lowerUsername] !== state.pendingUser.uid) {
+        state.error = 'Username taken';
+        render();
+        return;
+      }
 
-			window.openUserProfile = async (uid) => {
-				const modal = document.getElementById('profileModal');
-				const usernameEl = document.getElementById('profileUsername');
-				const aboutEl = document.getElementById('profileAbout');
-				const saveBtn = document.getElementById('saveProfileBtn');
-				
-				modal.classList.remove('hidden');
-				
-				if (currentUser && !currentUser.isAnonymous && uid === currentUser.uid) {
-					const userRef = ref(db, `users/${uid}`);
-					const snapshot = await get(userRef);
-					const userData = snapshot.val() || {};
-					
-					usernameEl.textContent = userData.username || 'User';
-					aboutEl.value = userData.about || '';
-					aboutEl.readOnly = false;
-					saveBtn.style.display = 'block';
-				} else {
-					const userRef = ref(db, `users/${uid}`);
-					const snapshot = await get(userRef);
-					const userData = snapshot.val();
-					
-					if (userData) {
-						usernameEl.textContent = userData.username || 'User';
-						aboutEl.value = userData.about || 'No information available.';
-						aboutEl.readOnly = true;
-						saveBtn.style.display = 'none';
-					} else {
-						usernameEl.textContent = 'Anonymous User';
-						aboutEl.value = 'This is an anonymous user.';
-						aboutEl.readOnly = true;
-						saveBtn.style.display = 'none';
-					}
-				}
-			};
+      await set(ref(db, `claimedUsernames/${lowerUsername}`), state.pendingUser.uid);
+      await set(ref(db, `users/${state.pendingUser.uid}`), {
+        username,
+        about: '',
+        color: state.color,
+        borderStyle: state.borderStyle
+      });
 
-			window.closeProfile = () => {
-				document.getElementById('profileModal').classList.add('hidden');
-			};
+      state.user = state.pendingUser;
+      state.username = username;
+      state.showUsernamePrompt = false;
+      state.pendingUser = null;
+      state.error = '';
+      render();
+    }
 
-			window.saveProfile = async () => {
-				if (!currentUser || currentUser.isAnonymous) return;
-				
-				const about = document.getElementById('profileAbout').value;
-				const userRef = ref(db, `users/${currentUser.uid}`);
-				const snapshot = await get(userRef);
-				const userData = snapshot.val() || {};
-				
-				await set(userRef, {
-					...userData,
-					about: about
-				});
-				
-				const saveBtn = document.getElementById('saveProfileBtn');
-				saveBtn.textContent = 'SAVED!';
-				setTimeout(() => {
-					saveBtn.textContent = 'SAVE';
-				}, 2000);
-			};
+    async function sendMessage() {
+      if (!state.user || !state.input.trim()) return;
 
-			document.getElementById('messageInput').addEventListener('keypress', (e) => {
-				if (e.key === 'Enter' && !e.shiftKey) {
-					e.preventDefault();
-					window.sendMessage();
-				}
-			});
+      const messageRef = await push(ref(db, 'messages'), {
+        userId: state.user.uid,
+        userName: state.username,
+        text: state.input.trim(),
+        timestamp: Date.now(),
+        color: state.color,
+        borderStyle: state.borderStyle
+      });
 
-			document.getElementById('anonUsername').addEventListener('keypress', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					window.signInAnonymously();
-				}
-			});
+      state.lastAnimatedId = messageRef.key;
+      state.input = '';
+      
+      // Only update the input field, don't re-render everything
+      const inputEl = document.getElementById('messageInput');
+      if (inputEl) inputEl.value = '';
+    }
 
-			document.getElementById('promptUsernameInput').addEventListener('keypress', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					window.confirmUsername();
-				}
-			});
+    async function openProfile(uid) {
+      state.profileUid = uid;
+      const userRef = ref(db, `users/${uid}`);
+      const snapshot = await get(userRef);
+      const data = snapshot.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
+      state.profileData = data;
+      
+      if (uid === state.user?.uid) {
+        state.color = data.color || '0';
+        state.borderStyle = data.borderStyle || 'solid';
+      }
+      
+      state.showProfile = true;
+      render();
+    }
 
-			document.getElementById('colorSlider').addEventListener('input', (e) => {
-				if (currentUser) {
-					userPreferences.color = e.target.value;
-					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
-					prefs.color = e.target.value;
-					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
-				}
-			});
+    function closeProfile() {
+      state.showProfile = false;
+      // Reload user data to get current color/border settings
+      if (state.user) {
+        const userRef = ref(db, `users/${state.user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val();
+          if (userData) {
+            state.color = userData.color || '0';
+            state.borderStyle = userData.borderStyle || 'solid';
+          }
+          render();
+        });
+      } else {
+        render();
+      }
+    }
 
-			document.getElementById('borderPicker').addEventListener('change', (e) => {
-				if (currentUser) {
-					userPreferences.borderStyle = e.target.value;
-					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
-					prefs.borderStyle = e.target.value;
-					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
-				}
-			});
+    async function saveProfile() {
+      if (!state.user) return;
 
-			await loadClaimedUsernames();
-			loadMessages();
-			
-			// Register service worker for PWA
-			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register('./sw.js').catch(err => {
-					console.log('Service worker registration failed:', err);
-				});
-			}
-		</script>
-	</body>
+      const userRef = ref(db, `users/${state.user.uid}`);
+      const snapshot = await get(userRef);
+      const existing = snapshot.val() || {};
+
+      await set(userRef, { 
+        ...existing, 
+        about: state.profileData.about,
+        color: state.color,
+        borderStyle: state.borderStyle
+      });
+      
+      // Update profile data immediately
+      state.profileData.color = state.color;
+      state.profileData.borderStyle = state.borderStyle;
+      
+      // Clear rendered messages so they re-render with new colors
+      renderedMessages.clear();
+      const container = document.getElementById('messages');
+      if (container) container.innerHTML = '';
+      
+      setTimeout(() => {
+        state.showProfile = false;
+        render();
+      }, 500);
+    }
+
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userRef = ref(db, `users/${firebaseUser.uid}`);
+        const snapshot = await get(userRef);
+
+        if (!snapshot.exists() || !snapshot.val().username) {
+          state.pendingUser = firebaseUser;
+          state.usernameInput = firebaseUser.displayName || '';
+          state.showUsernamePrompt = true;
+        } else {
+          state.user = firebaseUser;
+          const userData = snapshot.val();
+          state.username = userData.username;
+          state.color = userData.color || '0';
+          state.borderStyle = userData.borderStyle || 'solid';
+          state.showUsernamePrompt = false;
+        }
+      } else {
+        state.user = null;
+        state.username = '';
+      }
+      render();
+    });
+
+    const messagesRef = ref(db, 'messages');
+    onChildAdded(messagesRef, (snapshot) => {
+      const id = snapshot.key;
+      if (state.loadedIds.has(id)) return;
+
+      state.loadedIds.add(id);
+      const data = snapshot.val();
+
+      state.messages.push({
+        id,
+        ...data
+      });
+
+      if (state.messages.length > 15) {
+        const removed = state.messages.shift();
+        renderedMessages.delete(removed.id);
+        const container = document.getElementById('messages');
+        if (container && container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
+      }
+
+      renderMessages();
+    });
+
+    render();
+  </script>
+</body>
 </html>

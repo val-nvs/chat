@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/png" href="favicon.png" />
+		<link rel="manifest" href="manifest.json">
+		<meta name="theme-color" content="#0b0b0d">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="chat">
+		<link rel="apple-touch-icon" href="icon-192.png">
+		<title>chat</title>
+		<style>
+			@font-face {
+				font-family: 'PerfectDOS';
+				src: url('./PerfectDosVga.ttf') format('truetype');
+			}
+			:root {
+				color-scheme: dark;
+			}
+			html, body {
+				height: 100%;
+				margin: 0;
+				overflow: hidden;
+			}
+			* {
+				font-family: 'PerfectDOS', monospace;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				background: #0b0b0d;
+				height: 100dvh;
+				position: relative;
+				box-shadow: inset 0 0 0 8px #0b0b0d, inset 0 0 0 10px hsl(330,100%,50%);
+			}
+			.login-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+				gap: 20px;
+				z-index: 1000;
+			}
+			.login-overlay.hidden {
+				display: none;
+			}
+			.login-overlay h1 {
+				color: hsl(180,100%,50%);
+				font-size: 1.5rem;
+				margin-bottom: 10px;
+			}
+			.username-input {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: 2px solid hsl(180,100%,50%);
+				padding: 12px 24px;
+				font-size: 16px;
+				outline: none;
+				width: 250px;
+				text-align: center;
+			}
+			.username-input::placeholder {
+				color: hsl(180,100%,30%);
+			}
+			.google-btn, .anon-btn {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				padding: 12px 24px;
+				border: 2px solid hsl(180,100%,50%);
+				font-size: 16px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				transition: all 0.2s;
+				width: 250px;
+				justify-content: center;
+			}
+			.google-btn:hover, .anon-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+			}
+			.anon-btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.error-message {
+				color: hsl(0,100%,50%);
+				font-size: 0.9rem;
+				text-align: center;
+				max-width: 250px;
+			}
+			.chat-header {
+				padding: 1rem;
+				border-bottom: 2px solid #333;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 10px;
+			}
+			.user-info {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: hsl(180,100%,50%);
+			}
+			.username-display {
+				cursor: pointer;
+				padding: 4px 8px;
+				border: 2px solid transparent;
+				transition: border-color 0.2s;
+			}
+			.username-display:hover {
+				border-color: hsl(180,100%,50%);
+			}
+			.verified-badge {
+				display: none !important;
+			}
+			.username-prompt {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 3000;
+			}
+			.username-prompt.hidden {
+				display: none;
+			}
+			.prompt-box {
+				background: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 2rem;
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				min-width: 300px;
+			}
+			.prompt-title {
+				color: hsl(180,100%,50%);
+				font-size: 1.2rem;
+				text-align: center;
+			}
+			.prompt-input {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: 2px solid hsl(180,100%,50%);
+				padding: 12px;
+				font-size: 16px;
+				outline: none;
+				text-align: center;
+			}
+			.prompt-buttons {
+				display: flex;
+				gap: 10px;
+			}
+			.prompt-btn {
+				flex: 1;
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				padding: 12px;
+				border: 2px solid hsl(180,100%,50%);
+				font-size: 16px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+			.prompt-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+			}
+			.prompt-btn.cancel {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border-color: hsl(0,100%,50%);
+			}
+			.prompt-btn.cancel:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			.style-controls {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+			}
+			.color-slider, .border-picker {
+				background: transparent;
+				border: 2px solid hsl(180,100%,50%);
+				color: hsl(180,100%,50%);
+				padding: 4px 8px;
+				font-size: 0.9rem;
+				cursor: pointer;
+				outline: none;
+			}
+			.border-picker option {
+				background: #0b0b0d;
+				color: white;
+			}
+			.logout-btn {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border: 2px solid hsl(0,100%,50%);
+				padding: 4px 12px;
+				font-size: 0.85rem;
+				cursor: pointer;
+				transition: all 0.2s;
+				flex-shrink: 0;
+				white-space: nowrap;
+			}
+			.logout-btn:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			.chat-container {
+				flex: 1;
+				padding: 1rem;
+				overflow-y: auto;
+				overflow-x: hidden;
+				min-height: 0;
+				-webkit-overflow-scrolling: touch;
+			}
+			.messages-wrapper {
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-end;
+				min-height: 100%;
+			}
+			.message {
+				align-self: flex-end;
+				position: relative;
+				font-size: 1.5rem;
+				line-height: 1;
+				padding: 0.5rem 1rem;
+				margin: 0.6rem 0;
+				max-width: 60%;
+				word-wrap: break-word;
+				background-color: #0b0b0d;
+				border: 2px solid;
+				border-radius: 0;
+				cursor: pointer;
+				transition: transform 0.1s;
+			}
+			.message:hover {
+				transform: translateX(-2px);
+			}
+			.username {
+				position: absolute;
+				top: -0.6em;
+				left: .6em;
+				font-size: 1.5rem;
+				background: #0b0b0d;
+				padding: 0;
+				border-radius: 0;
+				pointer-events: none;
+			}
+			.clock {
+				position: absolute;
+				bottom: -0.6em;
+				right: .6em;
+				font-size: 1rem;
+				background: #0b0b0d;
+				padding: 0;
+				border-radius: 0;
+				pointer-events: none;
+			}
+			.input-container {
+				width: 100%;
+				border-top: 2px solid #333;
+				display: flex;
+				gap: 0;
+				flex-shrink: 0;
+				min-width: 0;
+			}
+			.chat-input {
+				flex: 1;
+				padding: 1rem;
+				font-size: 1.5rem;
+				background: #0b0b0d;
+				color: white;
+				border: none;
+				outline: none;
+				box-sizing: border-box;
+				resize: none;
+				min-height: 50px;
+				min-width: 0;
+			}
+			.send-btn {
+				padding: 1rem 1.5rem;
+				font-size: 1.5rem;
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+				border: none;
+				border-left: 2px solid #333;
+				cursor: pointer;
+				transition: all 0.2s;
+				flex-shrink: 0;
+				white-space: nowrap;
+				min-width: fit-content;
+			}
+			.send-btn:hover {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+			}
+			.profile-modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(11, 11, 13, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 2000;
+			}
+			.profile-modal.hidden {
+				display: none;
+			}
+			.profile-content {
+				background: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 2rem;
+				max-width: 500px;
+				width: 90%;
+				max-height: 80vh;
+				overflow-y: auto;
+			}
+			.profile-header {
+				color: hsl(180,100%,50%);
+				font-size: 1.5rem;
+				margin-bottom: 1rem;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.close-btn {
+				background: transparent;
+				color: hsl(0,100%,50%);
+				border: 2px solid hsl(0,100%,50%);
+				padding: 4px 12px;
+				font-size: 0.85rem;
+				cursor: pointer;
+			}
+			.close-btn:hover {
+				background: hsl(0,100%,50%);
+				color: #0b0b0d;
+			}
+			.profile-section {
+				margin-top: 1rem;
+			}
+			.profile-label {
+				color: hsl(180,100%,50%);
+				font-size: 1rem;
+				margin-bottom: 0.5rem;
+			}
+			.profile-textarea {
+				width: 100%;
+				background: #0b0b0d;
+				color: white;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 0.5rem;
+				font-size: 1rem;
+				outline: none;
+				resize: vertical;
+				min-height: 100px;
+				box-sizing: border-box;
+			}
+			.profile-textarea:read-only {
+				opacity: 0.7;
+			}
+			.save-btn {
+				background: hsl(180,100%,50%);
+				color: #0b0b0d;
+				border: 2px solid hsl(180,100%,50%);
+				padding: 8px 16px;
+				font-size: 1rem;
+				cursor: pointer;
+				margin-top: 1rem;
+				width: 100%;
+			}
+			.save-btn:hover {
+				background: #0b0b0d;
+				color: hsl(180,100%,50%);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="chat-header">
+			<div class="user-info">
+				<span class="username-display" id="usernameDisplay" onclick="openMyProfile()"></span>
+			</div>
+			<div class="style-controls">
+				<input type="range" class="color-slider" id="colorSlider" min="0" max="360" value="180">
+				<select class="border-picker" id="borderPicker">
+					<option value="solid" selected>Solid</option>
+					<option value="dashed">Dashed</option>
+					<option value="dotted">Dotted</option>
+				</select>
+				<button class="logout-btn" id="logoutBtn" onclick="signOut()">LOGOUT</button>
+			</div>
+		</div>
+		
+		<div class="chat-container" id="chatContainer">
+			<div class="messages-wrapper" id="messagesWrapper"></div>
+		</div>
+		
+		<div class="input-container">
+			<input type="text" class="chat-input" id="messageInput" placeholder="Type...">
+			<button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND</button>
+		</div>
+
+		<div class="login-overlay" id="loginOverlay">
+			<h1>CHAT</h1>
+			<div class="error-message" id="loginError" style="display: none;"></div>
+			<input type="text" class="username-input" id="anonUsername" placeholder="Enter username" maxlength="20">
+			<button class="anon-btn" id="anonBtn" onclick="signInAnonymously()">JOIN AS GUEST</button>
+			<div style="color: hsl(180,100%,50%); margin: 10px 0;">- OR -</div>
+			<button class="google-btn" onclick="signInWithGoogle()">
+				<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="currentColor"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="currentColor"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="currentColor"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="currentColor"/></g></svg>
+				SIGN IN WITH GOOGLE
+			</button>
+		</div>
+
+		<div class="username-prompt hidden" id="usernamePrompt">
+			<div class="prompt-box">
+				<div class="prompt-title">CLAIM USERNAME</div>
+				<input type="text" class="prompt-input" id="promptUsernameInput" placeholder="Enter username" maxlength="20">
+				<div class="prompt-buttons">
+					<button class="prompt-btn cancel" onclick="cancelUsername()">CANCEL</button>
+					<button class="prompt-btn" onclick="confirmUsername()">CONFIRM</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="profile-modal hidden" id="profileModal">
+			<div class="profile-content">
+				<div class="profile-header">
+					<span id="profileUsername">Profile</span>
+					<button class="close-btn" onclick="closeProfile()">CLOSE</button>
+				</div>
+				<div class="profile-section">
+					<div class="profile-label">ABOUT ME</div>
+					<textarea class="profile-textarea" id="profileAbout" placeholder="Tell us about yourself..." maxlength="500"></textarea>
+				</div>
+				<button class="save-btn" id="saveProfileBtn" onclick="saveProfile()">SAVE</button>
+			</div>
+		</div>
+
+		<script type="module">
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+			import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously as firebaseSignInAnonymously, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+			import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+
+			const firebaseConfig = {
+				apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
+				authDomain: "social-e02b4.firebaseapp.com",
+				databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
+				projectId: "social-e02b4",
+				storageBucket: "social-e02b4.firebasestorage.app",
+				messagingSenderId: "64302705629",
+				appId: "1:64302705629:web:9090276dba0418cee6e434"
+			};
+
+			const app = initializeApp(firebaseConfig);
+			const auth = getAuth(app);
+			const db = getDatabase(app);
+			const provider = new GoogleAuthProvider();
+
+			let currentUser = null;
+			let messagesLoaded = false;
+			let userPreferences = {
+				color: '180',
+				borderStyle: 'solid'
+			};
+			let claimedUsernames = {};
+			let pendingGoogleUser = null;
+			let loadedMessageIds = new Set();
+			let lastMessageId = null;
+			let initialLoadComplete = false;
+
+			const userColorMap = {};
+			const hueValues = [120, 180, 300, 60, 200, 280, 30, 330];
+			let hueIndex = 0;
+
+			function getUserColor(uid) {
+				if (!userColorMap[uid]) {
+					userColorMap[uid] = hueValues[hueIndex % hueValues.length];
+					hueIndex++;
+				}
+				return `hsl(${userColorMap[uid]},100%,50%)`;
+			}
+
+			function showLoginError(message) {
+				const errorEl = document.getElementById('loginError');
+				errorEl.textContent = message;
+				errorEl.style.display = 'block';
+				setTimeout(() => {
+					errorEl.style.display = 'none';
+				}, 5000);
+			}
+
+			async function loadClaimedUsernames() {
+				try {
+					const usernamesRef = ref(db, 'claimedUsernames');
+					const snapshot = await get(usernamesRef);
+					if (snapshot.exists()) {
+						claimedUsernames = snapshot.val();
+					}
+				} catch (error) {
+					console.error('Error loading usernames:', error);
+				}
+			}
+
+			window.signInAnonymously = async () => {
+				const username = document.getElementById('anonUsername').value.trim();
+				if (!username) {
+					showLoginError('Please enter a username');
+					return;
+				}
+
+				const lowerUsername = username.toLowerCase();
+				if (claimedUsernames[lowerUsername]) {
+					showLoginError('Username claimed by Google user. Choose another.');
+					return;
+				}
+
+				try {
+					// Store username BEFORE signing in
+					sessionStorage.setItem('pendingAnonUsername', username);
+					console.log('Pre-storing username:', username);
+					
+					await firebaseSignInAnonymously(auth);
+				} catch (error) {
+					console.error('Error signing in anonymously:', error);
+					showLoginError('Failed to join. Check Firebase settings.');
+					sessionStorage.removeItem('pendingAnonUsername');
+				}
+			};
+
+			window.signInWithGoogle = async () => {
+				try {
+					const result = await signInWithPopup(auth, provider);
+					pendingGoogleUser = result.user;
+					
+					// Check if user already has a username
+					const userRef = ref(db, `users/${pendingGoogleUser.uid}`);
+					const snapshot = await get(userRef);
+					
+					if (snapshot.exists() && snapshot.val().username) {
+						// User already exists, no need to prompt
+						return;
+					}
+					
+					// Show custom prompt
+					document.getElementById('promptUsernameInput').value = pendingGoogleUser.displayName || 'User';
+					document.getElementById('usernamePrompt').classList.remove('hidden');
+				} catch (error) {
+					console.error('Error signing in:', error);
+					showLoginError('Sign in failed. Check Firebase settings.');
+				}
+			};
+
+			window.confirmUsername = async () => {
+				const username = document.getElementById('promptUsernameInput').value.trim();
+				if (!username) {
+					return;
+				}
+
+				const lowerUsername = username.toLowerCase();
+				
+				try {
+					const usernamesRef = ref(db, 'claimedUsernames');
+					const snapshot = await get(usernamesRef);
+					const existing = snapshot.exists() ? snapshot.val() : {};
+					
+					if (existing[lowerUsername] && existing[lowerUsername] !== pendingGoogleUser.uid) {
+						showLoginError('Username already claimed. Try another.');
+						return;
+					}
+
+					await set(ref(db, `claimedUsernames/${lowerUsername}`), pendingGoogleUser.uid);
+					await set(ref(db, `users/${pendingGoogleUser.uid}`), {
+						username,
+						isVerified: true,
+						about: ''
+					});
+					
+					claimedUsernames[lowerUsername] = pendingGoogleUser.uid;
+					document.getElementById('usernamePrompt').classList.add('hidden');
+					pendingGoogleUser = null;
+				} catch (error) {
+					console.error('Error claiming username:', error);
+					showLoginError('Failed to claim username.');
+				}
+			};
+
+			window.cancelUsername = async () => {
+				document.getElementById('usernamePrompt').classList.add('hidden');
+				if (pendingGoogleUser) {
+					await firebaseSignOut(auth);
+					pendingGoogleUser = null;
+				}
+			};
+
+			window.signOut = async () => {
+				try {
+					if (currentUser) {
+						sessionStorage.removeItem('anonUserData_' + currentUser.uid);
+					}
+					await firebaseSignOut(auth);
+				} catch (error) {
+					console.error('Error signing out:', error);
+				}
+			};
+
+			onAuthStateChanged(auth, async (user) => {
+				if (user) {
+					currentUser = user;
+					document.getElementById('loginOverlay').classList.add('hidden');
+					
+					let username;
+					
+					if (user.isAnonymous) {
+						// Get the pending username and store it permanently
+						const pendingUsername = sessionStorage.getItem('pendingAnonUsername');
+						
+						if (pendingUsername) {
+							username = pendingUsername;
+							const anonData = { username, isAnonymous: true };
+							sessionStorage.setItem('anonUserData_' + user.uid, JSON.stringify(anonData));
+							sessionStorage.removeItem('pendingAnonUsername');
+							console.log('Assigned username:', username, 'to UID:', user.uid);
+						} else {
+							const anonData = JSON.parse(sessionStorage.getItem('anonUserData_' + user.uid) || '{}');
+							username = anonData.username || 'Guest';
+						}
+					} else {
+						const userRef = ref(db, `users/${user.uid}`);
+						const snapshot = await get(userRef);
+						const userData = snapshot.val() || {};
+						username = userData.username || user.displayName || 'User';
+					}
+					
+					document.getElementById('usernameDisplay').textContent = username;
+					
+					const savedPrefs = JSON.parse(sessionStorage.getItem('userPrefs_' + user.uid) || '{}');
+					userPreferences.color = savedPrefs.color || '180';
+					userPreferences.borderStyle = savedPrefs.borderStyle || 'solid';
+					document.getElementById('colorSlider').value = userPreferences.color;
+					document.getElementById('borderPicker').value = userPreferences.borderStyle;
+					
+					if (!messagesLoaded) {
+						loadMessages();
+					}
+				} else {
+					currentUser = null;
+					document.getElementById('loginOverlay').classList.remove('hidden');
+					document.getElementById('usernameDisplay').textContent = 'Guest';
+					sessionStorage.removeItem('pendingAnonUsername');
+					
+					if (!messagesLoaded) {
+						loadMessages();
+					}
+				}
+			});
+
+			function loadMessages() {
+				const messagesRef = ref(db, 'messages');
+				let messageCount = 0;
+				
+				onChildAdded(messagesRef, (snapshot) => {
+					const messageId = snapshot.key;
+					
+					// Skip if we already loaded this message
+					if (loadedMessageIds.has(messageId)) {
+						return;
+					}
+					
+					loadedMessageIds.add(messageId);
+					const data = snapshot.val();
+					
+					messageCount++;
+					
+					// Only animate if initial load is complete (meaning this is a NEW message)
+					const shouldAnimate = initialLoadComplete;
+					
+					displayMessage(data.userId, data.userName, data.text, data.timestamp, data.color, data.borderStyle, shouldAnimate);
+					
+					// Remove oldest message from DOM if we have more than 15
+					const wrapper = document.getElementById('messagesWrapper');
+					while (wrapper.children.length > 15) {
+						wrapper.removeChild(wrapper.firstChild);
+					}
+					
+					// Mark initial load as complete after first batch
+					if (!initialLoadComplete && messageCount > 0) {
+						setTimeout(() => {
+							initialLoadComplete = true;
+						}, 500);
+					}
+					
+					lastMessageId = messageId;
+				});
+				messagesLoaded = true;
+			}
+
+			window.sendMessage = () => {
+				if (!currentUser) return;
+				
+				const input = document.getElementById('messageInput');
+				const text = input.value.trim();
+				
+				if (text) {
+					const username = document.getElementById('usernameDisplay').textContent;
+					
+					const messagesRef = ref(db, 'messages');
+					push(messagesRef, {
+						userId: currentUser.uid,
+						userName: username,
+						text: text,
+						timestamp: Date.now(),
+						color: userPreferences.color,
+						borderStyle: userPreferences.borderStyle
+					});
+					input.value = '';
+				}
+			};
+
+			function displayMessage(uid, userName, text, timestamp, color, borderStyle, isLastMessage = false) {
+				const wrapper = document.getElementById('messagesWrapper');
+				
+				const messageColor = color ? `hsl(${color},100%,50%)` : getUserColor(uid);
+				const messageBorder = borderStyle || 'solid';
+				
+				const now = new Date(timestamp);
+				const hours = String(now.getHours()).padStart(2, '0');
+				const minutes = String(now.getMinutes()).padStart(2, '0');
+				const timeStr = `${hours}:${minutes}`;
+				
+				const msg = document.createElement('div');
+				msg.className = 'message';
+				msg.style.color = messageColor;
+				msg.style.borderColor = messageColor;
+				msg.style.borderStyle = messageBorder;
+				msg.onclick = () => openUserProfile(uid);
+				
+				const usernameSpan = document.createElement('span');
+				usernameSpan.className = 'username';
+				usernameSpan.style.color = messageColor;
+				
+				const textSpan = document.createElement('span');
+				textSpan.className = 'message-text';
+				
+				const clockSpan = document.createElement('span');
+				clockSpan.className = 'clock';
+				clockSpan.style.color = messageColor;
+				clockSpan.textContent = timeStr;
+				
+				msg.appendChild(usernameSpan);
+				msg.appendChild(textSpan);
+				msg.appendChild(clockSpan);
+				
+				wrapper.appendChild(msg);
+				
+				// Only animate the last message
+				if (isLastMessage) {
+					let usernameIndex = 0;
+					let textIndex = 0;
+					const typeSpeed = 80; // milliseconds per character
+					
+					function typeCharacter() {
+						let stillTyping = false;
+						
+						// Type username character
+						if (usernameIndex < userName.length) {
+							usernameSpan.textContent += userName[usernameIndex];
+							usernameIndex++;
+							stillTyping = true;
+						}
+						
+						// Type message text character
+						if (textIndex < text.length) {
+							textSpan.textContent += text[textIndex];
+							textIndex++;
+							stillTyping = true;
+						}
+						
+						// Auto-scroll to bottom during typing
+						const container = document.getElementById('chatContainer');
+						container.scrollTop = container.scrollHeight;
+						
+						if (stillTyping) {
+							setTimeout(typeCharacter, typeSpeed);
+						}
+					}
+					
+					typeCharacter();
+				} else {
+					// Show full text immediately for older messages
+					usernameSpan.textContent = userName;
+					textSpan.textContent = text;
+				}
+				
+				// Initial scroll
+				const container = document.getElementById('chatContainer');
+				container.scrollTop = container.scrollHeight;
+			}
+
+			window.openMyProfile = () => {
+				if (!currentUser) return;
+				openUserProfile(currentUser.uid);
+			};
+
+			window.openUserProfile = async (uid) => {
+				const modal = document.getElementById('profileModal');
+				const usernameEl = document.getElementById('profileUsername');
+				const aboutEl = document.getElementById('profileAbout');
+				const saveBtn = document.getElementById('saveProfileBtn');
+				
+				modal.classList.remove('hidden');
+				
+				if (currentUser && !currentUser.isAnonymous && uid === currentUser.uid) {
+					const userRef = ref(db, `users/${uid}`);
+					const snapshot = await get(userRef);
+					const userData = snapshot.val() || {};
+					
+					usernameEl.textContent = userData.username || 'User';
+					aboutEl.value = userData.about || '';
+					aboutEl.readOnly = false;
+					saveBtn.style.display = 'block';
+				} else {
+					const userRef = ref(db, `users/${uid}`);
+					const snapshot = await get(userRef);
+					const userData = snapshot.val();
+					
+					if (userData) {
+						usernameEl.textContent = userData.username || 'User';
+						aboutEl.value = userData.about || 'No information available.';
+						aboutEl.readOnly = true;
+						saveBtn.style.display = 'none';
+					} else {
+						usernameEl.textContent = 'Anonymous User';
+						aboutEl.value = 'This is an anonymous user.';
+						aboutEl.readOnly = true;
+						saveBtn.style.display = 'none';
+					}
+				}
+			};
+
+			window.closeProfile = () => {
+				document.getElementById('profileModal').classList.add('hidden');
+			};
+
+			window.saveProfile = async () => {
+				if (!currentUser || currentUser.isAnonymous) return;
+				
+				const about = document.getElementById('profileAbout').value;
+				const userRef = ref(db, `users/${currentUser.uid}`);
+				const snapshot = await get(userRef);
+				const userData = snapshot.val() || {};
+				
+				await set(userRef, {
+					...userData,
+					about: about
+				});
+				
+				const saveBtn = document.getElementById('saveProfileBtn');
+				saveBtn.textContent = 'SAVED!';
+				setTimeout(() => {
+					saveBtn.textContent = 'SAVE';
+				}, 2000);
+			};
+
+			document.getElementById('messageInput').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter' && !e.shiftKey) {
+					e.preventDefault();
+					window.sendMessage();
+				}
+			});
+
+			document.getElementById('anonUsername').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					window.signInAnonymously();
+				}
+			});
+
+			document.getElementById('promptUsernameInput').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					window.confirmUsername();
+				}
+			});
+
+			document.getElementById('colorSlider').addEventListener('input', (e) => {
+				if (currentUser) {
+					userPreferences.color = e.target.value;
+					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
+					prefs.color = e.target.value;
+					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
+				}
+			});
+
+			document.getElementById('borderPicker').addEventListener('change', (e) => {
+				if (currentUser) {
+					userPreferences.borderStyle = e.target.value;
+					const prefs = JSON.parse(sessionStorage.getItem('userPrefs_' + currentUser.uid) || '{}');
+					prefs.borderStyle = e.target.value;
+					sessionStorage.setItem('userPrefs_' + currentUser.uid, JSON.stringify(prefs));
+				}
+			});
+
+			await loadClaimedUsernames();
+			loadMessages();
+			
+			// Register service worker for PWA
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.register('./sw.js').catch(err => {
+					console.log('Service worker registration failed:', err);
+				});
+			}
+		</script>
+	</body>
+</html>
