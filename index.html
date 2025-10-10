@@ -12,21 +12,23 @@
     * { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
     
-    .login-screen {
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11,11,13,0.85);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
       flex-direction: column;
       gap: 20px;
+      z-index: 100;
     }
-    .login-screen h1 { color: hsl(180,100%,50%); font-size: 2rem; }
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 300px;
-    }
+    .login-overlay h1 { color: hsl(180,100%,50%); font-size: 2rem; }
+    .login-form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
     .login-input {
       background: #0b0b0d;
       color: hsl(180,100%,50%);
@@ -44,20 +46,14 @@
       font-size: 16px;
       cursor: pointer;
     }
-    .login-btn:hover { background: hsl(180,100%,40%); }
     .toggle-link {
       color: hsl(180,100%,50%);
       text-align: center;
       cursor: pointer;
       font-size: 0.9rem;
     }
-    .toggle-link:hover { text-decoration: underline; }
     
-    .chat-app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+    .chat-app { display: flex; flex-direction: column; height: 100vh; }
     .floating-controls {
       position: fixed;
       top: 1rem;
@@ -66,34 +62,21 @@
       gap: 10px;
       z-index: 1000;
     }
-    .username { 
-      color: hsl(180,100%,50%); 
-      cursor: pointer; 
+    .username, .logout-btn { 
       padding: 8px 16px;
       background: rgba(11,11,13,0.9);
-      border: 2px solid hsl(180,100%,50%);
+      border: 2px solid;
       backdrop-filter: blur(10px);
-    }
-    .username:hover { 
-      background: hsl(180,100%,50%);
-      color: #0b0b0d;
-    }
-    .logout-btn {
-      background: rgba(11,11,13,0.9);
-      color: hsl(0,100%,50%);
-      border: 2px solid hsl(0,100%,50%);
-      padding: 8px 16px;
       cursor: pointer;
-      backdrop-filter: blur(10px);
     }
-    .logout-btn:hover { background: hsl(0,100%,50%); color: #0b0b0d; }
+    .username { color: hsl(180,100%,50%); border-color: hsl(180,100%,50%); }
+    .logout-btn { color: hsl(0,100%,50%); border-color: hsl(0,100%,50%); }
     
     .messages {
       flex: 1;
-      padding: 1rem;
+      padding: 1rem 1rem 1rem 1rem;
       padding-top: 4rem;
       overflow-y: auto;
-      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -111,25 +94,11 @@
       transition: transform 0.1s;
     }
     .message:hover { transform: translateX(-2px); }
-    .message .name {
-      position: absolute;
-      top: -0.6em;
-      left: .6em;
-      font-size: 1.5rem;
-      background: #0b0b0d;
-    }
-    .message .time {
-      position: absolute;
-      bottom: -0.6em;
-      right: .6em;
-      font-size: 1rem;
-      background: #0b0b0d;
-    }
+    .message .name, .message .time { position: absolute; background: #0b0b0d; }
+    .message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
+    .message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
     
-    .input-area {
-      border-top: 2px solid #333;
-      display: flex;
-    }
+    .input-area { border-top: 2px solid #333; display: flex; }
     .input-area input {
       flex: 1;
       padding: 1rem;
@@ -148,7 +117,6 @@
       border-left: 2px solid #333;
       cursor: pointer;
     }
-    .send-btn:hover { background: hsl(180,100%,50%); color: #0b0b0d; }
     
     .modal {
       position: fixed;
@@ -156,13 +124,13 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(11,11,13,0.8);
+      background: rgba(11,11,13,0.85);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 2000;
     }
-    .modal.hidden { display: none; }
     .modal-content {
       background: #0b0b0d;
       border: 2px solid hsl(180,100%,50%);
@@ -190,11 +158,7 @@
       outline: none;
       margin: 10px 0;
     }
-    .modal textarea {
-      color: white;
-      min-height: 100px;
-      resize: vertical;
-    }
+    .modal textarea { color: white; min-height: 100px; resize: vertical; }
     .modal button {
       background: hsl(180,100%,50%);
       color: #0b0b0d;
@@ -205,7 +169,6 @@
       font-size: 16px;
       margin-top: 10px;
     }
-    .modal button:hover { background: hsl(180,100%,40%); }
     .close-btn {
       background: transparent !important;
       color: hsl(0,100%,50%) !important;
@@ -214,12 +177,9 @@
       width: auto !important;
       margin: 0 !important;
     }
-    .close-btn:hover { background: hsl(0,100%,50%) !important; color: #0b0b0d !important; }
     .error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
     
-    .style-section {
-      margin-top: 1.5rem;
-    }
+    .style-section { margin-top: 1.5rem; }
     .style-label {
       color: hsl(180,100%,50%);
       font-size: 1rem;
@@ -238,17 +198,11 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .color-option:hover {
-      transform: scale(1.1);
-    }
     .color-option.selected {
       border-color: white;
       box-shadow: 0 0 10px rgba(255,255,255,0.5);
     }
-    .border-options {
-      display: flex;
-      gap: 10px;
-    }
+    .border-options { display: flex; gap: 10px; }
     .border-option {
       flex: 1;
       padding: 12px;
@@ -256,9 +210,6 @@
       cursor: pointer;
       text-align: center;
       transition: all 0.2s;
-    }
-    .border-option:hover {
-      background: rgba(255,255,255,0.1);
     }
     .border-option.selected {
       border-color: white;
@@ -274,14 +225,22 @@
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div class="chat-app">
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="messageInput" placeholder="Type...">
+        <button class="send-btn" id="sendBtn">SEND</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
     import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
-    const firebaseConfig = {
+    const app = initializeApp({
       apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
       authDomain: "social-e02b4.firebaseapp.com",
       databaseURL: "https://social-e02b4-default-rtdb.firebaseio.com",
@@ -289,12 +248,10 @@
       storageBucket: "social-e02b4.firebasestorage.app",
       messagingSenderId: "64302705629",
       appId: "1:64302705629:web:9090276dba0418cee6e434"
-    };
+    });
 
-    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-
     const COLORS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
     let state = {
@@ -302,11 +259,10 @@
       username: '',
       color: '0',
       borderStyle: 'solid',
-      messages: [],
       input: '',
       showProfile: false,
-      profileData: null,
       profileUid: null,
+      profileData: null,
       showUsernamePrompt: false,
       usernameInput: '',
       isSignUp: false,
@@ -314,289 +270,63 @@
       loginPassword: '',
       error: '',
       pendingUser: null,
-      loadedIds: new Set(),
       lastAnimatedId: null
     };
 
-    const renderedMessages = new Set();
+    const messages = [];
+    const loadedIds = new Set();
 
-    function render() {
-      const root = document.getElementById('app');
-      
-      if (state.showUsernamePrompt) {
-        root.innerHTML = `
-          <div class="modal">
-            <div class="modal-content">
-              <div class="modal-header">CLAIM USERNAME</div>
-              ${state.error ? `<div class="error">${state.error}</div>` : ''}
-              <input id="usernameInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Enter username">
-              
-              <div class="style-section">
-                <span class="style-label">MESSAGE COLOR</span>
-                <div class="color-grid" id="colorGrid">
-                  ${COLORS.map(hue => `
-                    <div class="color-option ${state.color == hue ? 'selected' : ''}" 
-                         data-color="${hue}"
-                         style="background: hsl(${hue},100%,50%); border: 3px solid ${state.color == hue ? 'white' : 'hsl(' + hue + ',100%,30%)'};">
-                    </div>
-                  `).join('')}
-                </div>
-                
-                <span class="style-label">BORDER STYLE</span>
-                <div class="border-options">
-                  <div class="border-option ${state.borderStyle === 'solid' ? 'selected' : ''}" 
-                       data-style="solid"
-                       style="border: 2px solid hsl(${state.color},100%,30%);">
-                    SOLID
-                  </div>
-                  <div class="border-option ${state.borderStyle === 'dashed' ? 'selected' : ''}" 
-                       data-style="dashed"
-                       style="border: 2px dashed hsl(${state.color},100%,30%);">
-                    DASHED
-                  </div>
-                  <div class="border-option ${state.borderStyle === 'dotted' ? 'selected' : ''}" 
-                       data-style="dotted"
-                       style="border: 2px dotted hsl(${state.color},100%,30%);">
-                    DOTTED
-                  </div>
-                </div>
-                
-                <div class="preview-box" style="border: 2px ${state.borderStyle} hsl(${state.color},100%,30%); color: hsl(${state.color},100%,50%);">
-                  PREVIEW
-                </div>
-              </div>
-              
-              <button id="confirmBtn">CONFIRM</button>
-            </div>
-          </div>
-        `;
-        const input = document.getElementById('usernameInput');
-        input.oninput = e => {
-          state.usernameInput = e.target.value;
-        };
-        input.onkeypress = e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            confirmUsername();
-          }
-        };
-        input.focus();
-        
-        document.querySelectorAll('.color-option').forEach(el => {
-          el.onclick = () => {
-            state.color = el.dataset.color;
-            render();
-          };
-        });
-        
-        document.querySelectorAll('.border-option').forEach(el => {
-          el.onclick = () => {
-            state.borderStyle = el.dataset.style;
-            render();
-          };
-        });
-        
-        document.getElementById('confirmBtn').onclick = confirmUsername;
-        return;
+    // Setup input handlers once
+    document.getElementById('messageInput').oninput = e => state.input = e.target.value;
+    document.getElementById('messageInput').onkeypress = e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
       }
-      
-      if (!state.user) {
-        root.innerHTML = `
-          <div class="login-screen">
-            <h1>CHAT</h1>
-            ${state.error ? `<div class="error">${state.error}</div>` : ''}
-            <div class="login-form">
-              <input 
-                type="email" 
-                id="emailInput" 
-                class="login-input" 
-                placeholder="Email"
-                value="${state.loginEmail}"
-              >
-              <input 
-                type="password" 
-                id="passwordInput" 
-                class="login-input" 
-                placeholder="Password"
-                value="${state.loginPassword}"
-              >
-              <button class="login-btn" id="authBtn">
-                ${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}
-              </button>
-              <div class="toggle-link" id="toggleLink">
-                ${state.isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-              </div>
-            </div>
-          </div>
-        `;
-        
-        document.getElementById('emailInput').oninput = e => state.loginEmail = e.target.value;
-        document.getElementById('passwordInput').oninput = e => state.loginPassword = e.target.value;
-        document.getElementById('passwordInput').onkeypress = e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAuth();
-          }
-        };
-        document.getElementById('authBtn').onclick = handleAuth;
-        document.getElementById('toggleLink').onclick = () => {
-          state.isSignUp = !state.isSignUp;
-          state.error = '';
-          render();
-        };
-        return;
-      }
+    };
+    document.getElementById('sendBtn').onclick = sendMessage;
 
-      root.innerHTML = `
-        <div class="chat-app">
-          <div class="floating-controls">
-            <span class="username" id="usernameBtn">${state.username}</span>
-            <button class="logout-btn" id="logoutBtn">LOGOUT</button>
-          </div>
-          
-          <div class="messages" id="messages"></div>
-          
-          <div class="input-area">
-            <input type="text" id="messageInput" value="${state.input}" placeholder="Type...">
-            <button class="send-btn" id="sendBtn">SEND</button>
-          </div>
-        </div>
+    // Listen to messages
+    onChildAdded(ref(db, 'messages'), snapshot => {
+      const id = snapshot.key;
+      if (loadedIds.has(id)) return;
+      loadedIds.add(id);
 
-        ${state.showProfile ? `
-          <div class="modal" id="profileModal">
-            <div class="modal-content">
-              <div class="modal-header">
-                <span>${state.profileData?.username || 'User'}</span>
-                <button class="close-btn" id="closeBtn">CLOSE</button>
-              </div>
-              
-              <div style="color: hsl(180,100%,50%); margin-bottom: 0.5rem;">ABOUT ME</div>
-              <textarea id="aboutInput" maxlength="500" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
-              
-              ${state.profileUid === state.user?.uid ? `
-                <div class="style-section">
-                  <span class="style-label">MESSAGE COLOR</span>
-                  <div class="color-grid" id="colorGrid">
-                    ${COLORS.map(hue => `
-                      <div class="color-option ${state.color == hue ? 'selected' : ''}" 
-                           data-color="${hue}"
-                           style="background: hsl(${hue},100%,50%); border: 3px solid ${state.color == hue ? 'white' : 'hsl(' + hue + ',100%,30%)'};">
-                      </div>
-                    `).join('')}
-                  </div>
-                  
-                  <span class="style-label">BORDER STYLE</span>
-                  <div class="border-options">
-                    <div class="border-option ${state.borderStyle === 'solid' ? 'selected' : ''}" 
-                         data-style="solid"
-                         style="border: 2px solid hsl(${state.color},100%,30%);">
-                      SOLID
-                    </div>
-                    <div class="border-option ${state.borderStyle === 'dashed' ? 'selected' : ''}" 
-                         data-style="dashed"
-                         style="border: 2px dashed hsl(${state.color},100%,30%);">
-                      DASHED
-                    </div>
-                    <div class="border-option ${state.borderStyle === 'dotted' ? 'selected' : ''}" 
-                         data-style="dotted"
-                         style="border: 2px dotted hsl(${state.color},100%,30%);">
-                      DOTTED
-                    </div>
-                  </div>
-                  
-                  <div class="preview-box" style="border: 2px ${state.borderStyle} hsl(${state.color},100%,30%); color: hsl(${state.color},100%,50%);">
-                    PREVIEW
-                  </div>
-                </div>
-              ` : ''}
-              
-              ${state.profileUid === state.user?.uid ? '<button id="saveBtn">SAVE</button>' : ''}
-            </div>
-          </div>
-        ` : ''}
-      `;
+      messages.push({ id, ...snapshot.val() });
+      if (messages.length > 15) messages.shift();
 
-      document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
-      document.getElementById('logoutBtn').onclick = () => signOut(auth);
-      document.getElementById('messageInput').oninput = e => state.input = e.target.value;
-      document.getElementById('messageInput').onkeypress = e => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      };
-      document.getElementById('sendBtn').onclick = sendMessage;
+      addMessageToDOM({ id, ...snapshot.val() }, id === state.lastAnimatedId);
+    });
 
-      if (state.showProfile) {
-        document.getElementById('profileModal').onclick = e => {
-          if (e.target.id === 'profileModal') closeProfile();
-        };
-        document.getElementById('closeBtn').onclick = closeProfile;
-        if (state.profileUid === state.user?.uid) {
-          document.getElementById('aboutInput').oninput = e => {
-            state.profileData.about = e.target.value;
-          };
-          
-          document.querySelectorAll('.color-option').forEach(el => {
-            el.onclick = () => {
-              state.color = el.dataset.color;
-              render();
-            };
-          });
-          
-          document.querySelectorAll('.border-option').forEach(el => {
-            el.onclick = () => {
-              state.borderStyle = el.dataset.style;
-              render();
-            };
-          });
-          
-          document.getElementById('saveBtn').onclick = saveProfile;
-        }
-      }
-
-      renderMessages();
-    }
-
-    function renderMessages() {
+    function addMessageToDOM(msg, animate) {
       const container = document.getElementById('messages');
       if (!container) return;
 
-      state.messages.forEach((msg, idx) => {
-        if (renderedMessages.has(msg.id)) {
-          return;
-        }
+      while (container.children.length >= 15) {
+        container.removeChild(container.firstChild);
+      }
 
-        renderedMessages.add(msg.id);
+      const el = document.createElement('div');
+      el.className = 'message';
+      const light = `hsl(${msg.color},100%,50%)`;
+      const dark = `hsl(${msg.color},100%,30%)`;
+      el.style.color = light;
+      el.style.borderColor = dark;
+      el.style.borderStyle = msg.borderStyle;
+      el.onclick = () => openProfile(msg.userId);
+      el.innerHTML = `
+        <span class="name" style="color:${dark}"></span>
+        <span class="text"></span>
+        <span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
+      `;
+      container.appendChild(el);
 
-        const el = document.createElement('div');
-        el.className = 'message';
-        el.dataset.id = msg.id;
-        const lightColor = `hsl(${msg.color},100%,50%)`;
-        const darkColor = `hsl(${msg.color},100%,30%)`;
-        
-        el.style.color = lightColor;
-        el.style.borderColor = darkColor;
-        el.style.borderStyle = msg.borderStyle;
-        el.onclick = () => openProfile(msg.userId);
-        
-        el.innerHTML = `
-          <span class="name" style="color: ${darkColor}"></span>
-          <span class="text"></span>
-          <span class="time" style="color: ${darkColor}">${formatTime(msg.timestamp)}</span>
-        `;
-        
-        container.appendChild(el);
-
-        const shouldAnimate = msg.id === state.lastAnimatedId;
-        
-        if (shouldAnimate) {
-          animateMessage(el, msg.userName, msg.text);
-        } else {
-          el.querySelector('.name').textContent = msg.userName;
-          el.querySelector('.text').textContent = msg.text;
-        }
-      });
+      if (animate && state.user) {
+        animateMessage(el, msg.userName, msg.text);
+      } else {
+        el.querySelector('.name').textContent = msg.userName;
+        el.querySelector('.text').textContent = msg.text;
+      }
 
       container.scrollTop = container.scrollHeight;
     }
@@ -604,112 +334,24 @@
     function animateMessage(el, userName, text) {
       const nameEl = el.querySelector('.name');
       const textEl = el.querySelector('.text');
-      let nameIdx = 0;
-      let textIdx = 0;
-
+      let ni = 0, ti = 0;
       function type() {
-        if (nameIdx < userName.length) {
-          nameEl.textContent += userName[nameIdx];
-          nameIdx++;
-        }
-        if (textIdx < text.length) {
-          textEl.textContent += text[textIdx];
-          textIdx++;
-        }
-        
-        const container = document.getElementById('messages');
-        if (container) container.scrollTop = container.scrollHeight;
-        
-        if (nameIdx < userName.length || textIdx < text.length) {
-          setTimeout(type, 80);
-        }
+        if (ni < userName.length) nameEl.textContent += userName[ni++];
+        if (ti < text.length) textEl.textContent += text[ti++];
+        document.getElementById('messages').scrollTop = 9999;
+        if (ni < userName.length || ti < text.length) setTimeout(type, 80);
       }
-      
       type();
     }
 
-    function formatTime(timestamp) {
-      const d = new Date(timestamp);
-      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    }
-
-    async function handleAuth() {
-      const email = state.loginEmail.trim();
-      const password = state.loginPassword.trim();
-      
-      if (!email || !password) {
-        state.error = 'Please enter email and password';
-        render();
-        return;
-      }
-
-      try {
-        if (state.isSignUp) {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          state.pendingUser = userCredential.user;
-          state.usernameInput = email.split('@')[0];
-          state.showUsernamePrompt = true;
-          state.error = '';
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-          state.error = '';
-        }
-        render();
-      } catch (err) {
-        if (err.code === 'auth/email-already-in-use') {
-          state.error = 'Email already in use';
-        } else if (err.code === 'auth/invalid-email') {
-          state.error = 'Invalid email';
-        } else if (err.code === 'auth/weak-password') {
-          state.error = 'Password too weak (min 6 chars)';
-        } else if (err.code === 'auth/user-not-found') {
-          state.error = 'User not found';
-        } else if (err.code === 'auth/wrong-password') {
-          state.error = 'Wrong password';
-        } else if (err.code === 'auth/invalid-credential') {
-          state.error = 'Invalid credentials';
-        } else {
-          state.error = 'Authentication failed';
-        }
-        render();
-      }
-    }
-
-    async function confirmUsername() {
-      const username = state.usernameInput.trim();
-      if (!username) return;
-
-      const lowerUsername = username.toLowerCase();
-      const usernamesRef = ref(db, 'claimedUsernames');
-      const snapshot = await get(usernamesRef);
-      const existing = snapshot.val() || {};
-
-      if (existing[lowerUsername] && existing[lowerUsername] !== state.pendingUser.uid) {
-        state.error = 'Username taken';
-        render();
-        return;
-      }
-
-      await set(ref(db, `claimedUsernames/${lowerUsername}`), state.pendingUser.uid);
-      await set(ref(db, `users/${state.pendingUser.uid}`), {
-        username,
-        about: '',
-        color: state.color,
-        borderStyle: state.borderStyle
-      });
-
-      state.user = state.pendingUser;
-      state.username = username;
-      state.showUsernamePrompt = false;
-      state.pendingUser = null;
-      state.error = '';
-      render();
+    function formatTime(ts) {
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
 
     async function sendMessage() {
       if (!state.user || !state.input.trim()) return;
-
-      const messageRef = await push(ref(db, 'messages'), {
+      const msgRef = await push(ref(db, 'messages'), {
         userId: state.user.uid,
         userName: state.username,
         text: state.input.trim(),
@@ -717,124 +359,231 @@
         color: state.color,
         borderStyle: state.borderStyle
       });
-
-      state.lastAnimatedId = messageRef.key;
+      state.lastAnimatedId = msgRef.key;
       state.input = '';
-      
-      const inputEl = document.getElementById('messageInput');
-      if (inputEl) inputEl.value = '';
+      document.getElementById('messageInput').value = '';
     }
 
     async function openProfile(uid) {
-      state.profileUid = uid;
       const userRef = ref(db, `users/${uid}`);
-      const snapshot = await get(userRef);
-      const data = snapshot.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
+      const snap = await get(userRef);
+      const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
+      state.profileUid = uid;
       state.profileData = data;
-      
       if (uid === state.user?.uid) {
         state.color = data.color || '0';
         state.borderStyle = data.borderStyle || 'solid';
       }
-      
       state.showProfile = true;
-      render();
-    }
-
-    function closeProfile() {
-      state.showProfile = false;
-      if (state.user) {
-        const userRef = ref(db, `users/${state.user.uid}`);
-        get(userRef).then(snapshot => {
-          const userData = snapshot.val();
-          if (userData) {
-            state.color = userData.color || '0';
-            state.borderStyle = userData.borderStyle || 'solid';
-          }
-          render();
-        });
-      } else {
-        render();
-      }
+      renderOverlay();
     }
 
     async function saveProfile() {
       if (!state.user) return;
-
       const userRef = ref(db, `users/${state.user.uid}`);
-      const snapshot = await get(userRef);
-      const existing = snapshot.val() || {};
-
+      const snap = await get(userRef);
       await set(userRef, { 
-        ...existing, 
+        ...snap.val(), 
         about: state.profileData.about,
         color: state.color,
         borderStyle: state.borderStyle
       });
-      
-      state.profileData.color = state.color;
-      state.profileData.borderStyle = state.borderStyle;
-      
-      renderedMessages.clear();
-      const container = document.getElementById('messages');
-      if (container) container.innerHTML = '';
-      
-      setTimeout(() => {
-        state.showProfile = false;
-        render();
-      }, 500);
+      state.showProfile = false;
+      renderOverlay();
     }
 
-    onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userRef = ref(db, `users/${firebaseUser.uid}`);
-        const snapshot = await get(userRef);
-
-        if (!snapshot.exists() || !snapshot.val().username) {
-          state.pendingUser = firebaseUser;
-          state.usernameInput = firebaseUser.email?.split('@')[0] || '';
+    async function handleAuth() {
+      const email = state.loginEmail.trim();
+      const pw = state.loginPassword.trim();
+      if (!email || !pw) {
+        state.error = 'Enter email and password';
+        renderOverlay();
+        return;
+      }
+      try {
+        if (state.isSignUp) {
+          const cred = await createUserWithEmailAndPassword(auth, email, pw);
+          state.pendingUser = cred.user;
+          state.usernameInput = email.split('@')[0];
           state.showUsernamePrompt = true;
         } else {
-          state.user = firebaseUser;
-          const userData = snapshot.val();
-          state.username = userData.username;
-          state.color = userData.color || '0';
-          state.borderStyle = userData.borderStyle || 'solid';
+          await signInWithEmailAndPassword(auth, email, pw);
+        }
+        state.error = '';
+        renderOverlay();
+      } catch (err) {
+        state.error = err.code === 'auth/email-already-in-use' ? 'Email taken' :
+                      err.code === 'auth/weak-password' ? 'Password too weak' :
+                      err.code === 'auth/user-not-found' ? 'User not found' :
+                      err.code === 'auth/wrong-password' ? 'Wrong password' : 'Auth failed';
+        renderOverlay();
+      }
+    }
+
+    async function confirmUsername() {
+      const un = state.usernameInput.trim();
+      if (!un) return;
+      const lower = un.toLowerCase();
+      const snap = await get(ref(db, 'claimedUsernames'));
+      const existing = snap.val() || {};
+      if (existing[lower] && existing[lower] !== state.pendingUser.uid) {
+        state.error = 'Username taken';
+        renderOverlay();
+        return;
+      }
+      await set(ref(db, `claimedUsernames/${lower}`), state.pendingUser.uid);
+      await set(ref(db, `users/${state.pendingUser.uid}`), {
+        username: un,
+        about: '',
+        color: state.color,
+        borderStyle: state.borderStyle
+      });
+      state.user = state.pendingUser;
+      state.username = un;
+      state.showUsernamePrompt = false;
+      state.pendingUser = null;
+      state.error = '';
+      renderOverlay();
+    }
+
+    function renderOverlay() {
+      const existing = document.getElementById('overlay');
+      if (existing) existing.remove();
+
+      if (state.showUsernamePrompt) {
+        const div = document.createElement('div');
+        div.id = 'overlay';
+        div.className = 'modal';
+        div.innerHTML = `
+          <div class="modal-content">
+            <div class="modal-header">CLAIM USERNAME</div>
+            ${state.error ? `<div class="error">${state.error}</div>` : ''}
+            <input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username">
+            <div class="style-section">
+              <span class="style-label">COLOR</span>
+              <div class="color-grid" id="colorGrid">
+                ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:3px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
+              </div>
+              <span class="style-label">BORDER</span>
+              <div class="border-options">
+                ${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
+              </div>
+              <div class="preview-box" style="border:2px ${state.borderStyle} hsl(${state.color},100%,30%);color:hsl(${state.color},100%,50%)">PREVIEW</div>
+            </div>
+            <button id="confirmBtn">CONFIRM</button>
+          </div>
+        `;
+        document.body.appendChild(div);
+        document.getElementById('unInput').focus();
+        document.getElementById('unInput').oninput = e => state.usernameInput = e.target.value;
+        document.getElementById('unInput').onkeypress = e => e.key === 'Enter' && confirmUsername();
+        document.querySelectorAll('.color-option').forEach(el => el.onclick = () => { state.color = el.dataset.color; renderOverlay(); });
+        document.querySelectorAll('.border-option').forEach(el => el.onclick = () => { state.borderStyle = el.dataset.style; renderOverlay(); });
+        document.getElementById('confirmBtn').onclick = confirmUsername;
+        return;
+      }
+
+      if (!state.user) {
+        const div = document.createElement('div');
+        div.id = 'overlay';
+        div.className = 'login-overlay';
+        div.innerHTML = `
+          <h1>CHAT</h1>
+          ${state.error ? `<div class="error">${state.error}</div>` : ''}
+          <div class="login-form">
+            <input type="email" id="emailInput" class="login-input" placeholder="Email" value="${state.loginEmail}">
+            <input type="password" id="passwordInput" class="login-input" placeholder="Password" value="${state.loginPassword}">
+            <button class="login-btn" id="authBtn">${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}</button>
+            <div class="toggle-link" id="toggleLink">${state.isSignUp ? 'Already have account? Sign in' : "Don't have account? Sign up"}</div>
+          </div>
+        `;
+        document.body.appendChild(div);
+        document.getElementById('emailInput').oninput = e => state.loginEmail = e.target.value;
+        document.getElementById('passwordInput').oninput = e => state.loginPassword = e.target.value;
+        document.getElementById('passwordInput').onkeypress = e => e.key === 'Enter' && handleAuth();
+        document.getElementById('authBtn').onclick = handleAuth;
+        document.getElementById('toggleLink').onclick = () => { state.isSignUp = !state.isSignUp; state.error = ''; renderOverlay(); };
+        return;
+      }
+
+      if (state.showProfile) {
+        const div = document.createElement('div');
+        div.id = 'overlay';
+        div.className = 'modal';
+        div.innerHTML = `
+          <div class="modal-content">
+            <div class="modal-header">
+              <span>${state.profileData?.username || 'User'}</span>
+              <button class="close-btn" id="closeBtn">CLOSE</button>
+            </div>
+            <div style="color:hsl(180,100%,50%);margin-bottom:0.5rem">ABOUT ME</div>
+            <textarea id="aboutInput" maxlength="500" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
+            ${state.profileUid === state.user?.uid ? `
+              <div class="style-section">
+                <span class="style-label">COLOR</span>
+                <div class="color-grid">
+                  ${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:3px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
+                </div>
+                <span class="style-label">BORDER</span>
+                <div class="border-options">
+                  ${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
+                </div>
+                <div class="preview-box" style="border:2px ${state.borderStyle} hsl(${state.color},100%,30%);color:hsl(${state.color},100%,50%)">PREVIEW</div>
+              </div>
+              <button id="saveBtn">SAVE</button>
+            ` : ''}
+          </div>
+        `;
+        document.body.appendChild(div);
+        div.onclick = e => e.target.id === 'overlay' && (state.showProfile = false, renderOverlay());
+        document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
+        if (state.profileUid === state.user?.uid) {
+          document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
+          document.querySelectorAll('.color-option').forEach(el => el.onclick = () => { state.color = el.dataset.color; renderOverlay(); });
+          document.querySelectorAll('.border-option').forEach(el => el.onclick = () => { state.borderStyle = el.dataset.style; renderOverlay(); });
+          document.getElementById('saveBtn').onclick = saveProfile;
+        }
+        return;
+      }
+
+      // Logged in - show controls
+      const existing2 = document.getElementById('controls');
+      if (existing2) existing2.remove();
+      const div = document.createElement('div');
+      div.id = 'controls';
+      div.className = 'floating-controls';
+      div.innerHTML = `
+        <span class="username" id="usernameBtn">${state.username}</span>
+        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+      `;
+      document.body.appendChild(div);
+      document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
+      document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        const snap = await get(ref(db, `users/${user.uid}`));
+        if (!snap.exists() || !snap.val().username) {
+          state.pendingUser = user;
+          state.usernameInput = user.email?.split('@')[0] || '';
+          state.showUsernamePrompt = true;
+        } else {
+          state.user = user;
+          const data = snap.val();
+          state.username = data.username;
+          state.color = data.color || '0';
+          state.borderStyle = data.borderStyle || 'solid';
           state.showUsernamePrompt = false;
         }
       } else {
         state.user = null;
         state.username = '';
       }
-      render();
+      renderOverlay();
     });
 
-    const messagesRef = ref(db, 'messages');
-    onChildAdded(messagesRef, (snapshot) => {
-      const id = snapshot.key;
-      if (state.loadedIds.has(id)) return;
-
-      state.loadedIds.add(id);
-      const data = snapshot.val();
-
-      state.messages.push({
-        id,
-        ...data
-      });
-
-      if (state.messages.length > 15) {
-        const removed = state.messages.shift();
-        renderedMessages.delete(removed.id);
-        const container = document.getElementById('messages');
-        if (container && container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
-      }
-
-      renderMessages();
-    });
-
-    render();
+    renderOverlay();
   </script>
 </body>
 </html>
