@@ -23,7 +23,7 @@
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background: rgba(11,11,13,0.95);
+			background: rgba(11,11,13,0.5);
 			backdrop-filter: blur(8px);
 			display: flex;
 			align-items: center;
@@ -32,28 +32,30 @@
 			gap: 20px;
 			z-index: 100;
 		}
-		.login-overlay h1 { 
-			color: hsl(180,100%,50%); 
-			font-size: 3rem; 
-			margin-bottom: 1rem;
-			animation: pulse 2s ease-in-out infinite;
+		.login-overlay h1 { color: hsl(180,100%,50%); font-size: 2rem; }
+		.login-form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+		.login-input {
+			background: #0b0b0d;
+			color: hsl(180,100%,50%);
+			border: 2px solid hsl(180,100%,50%);
+			padding: 12px;
+			font-size: 16px;
+			outline: none;
 		}
-		@keyframes pulse {
-			0%, 100% { opacity: 1; }
-			50% { opacity: 0.7; }
-		}
-		.enter-btn {
+		.login-input::placeholder { color: hsl(180,100%,30%); }
+		.login-btn {
 			background: hsl(180,100%,50%);
 			color: #0b0b0d;
-			padding: 16px 48px;
+			padding: 12px 24px;
 			border: none;
-			font-size: 1.5rem;
+			font-size: 16px;
 			cursor: pointer;
-			transition: all 0.3s;
 		}
-		.enter-btn:hover {
-			transform: scale(1.05);
-			box-shadow: 0 0 20px hsla(180,100%,50%,0.5);
+		.toggle-link {
+			color: hsl(180,100%,50%);
+			text-align: center;
+			cursor: pointer;
+			font-size: 0.9rem;
 		}
 		
 		.chat-app { 
@@ -120,22 +122,6 @@
 		.message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
 		.message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
 		
-		.system-message {
-			align-self: flex-start;
-			font-size: 1.2rem;
-			color: white;
-			background: transparent;
-			border: 1px dashed #666;
-			padding: 0.3rem 0.8rem;
-			margin: 0.4rem 0;
-			max-width: 50%;
-			cursor: default;
-		}
-		.system-message:hover { transform: none; }
-		.system-message .highlight {
-			font-weight: bold;
-		}
-		
 		.input-area { border-top: 2px solid #333; display: flex; }
 		.input-area input {
 			flex: 1;
@@ -196,7 +182,7 @@
 			outline: none;
 			margin: 10px 0;
 		}
-		.modal textarea { color: white; min-height: 60px; resize: vertical; }
+		.modal textarea { color: white; min-height: 100px; resize: vertical; }
 		.modal textarea:read-only { 
 			opacity: 0.7;
 			cursor: not-allowed;
@@ -260,18 +246,12 @@
 			border-color: white;
 			box-shadow: 0 0 8px rgba(255,255,255,0.5);
 		}
-		.loading {
-			display: inline-block;
-			width: 20px;
-			height: 20px;
-			border: 3px solid rgba(255,255,255,0.3);
-			border-top-color: hsl(180,100%,50%);
-			border-radius: 50%;
-			animation: spin 1s linear infinite;
-			margin-left: 10px;
-		}
-		@keyframes spin {
-			to { transform: rotate(360deg); }
+		.preview-box {
+			margin-top: 1rem;
+			padding: 0.8rem;
+			background: #0b0b0d;
+			text-align: center;
+			font-size: 1rem;
 		}
 	</style>
 </head>
@@ -290,8 +270,8 @@
 
 	<script type="module">
 		import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
-		import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
-		import { getDatabase, ref, push, onChildAdded, set, get, onDisconnect, onValue } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
+		import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+		import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
 		const app = initializeApp({
 			apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
@@ -319,55 +299,18 @@
 			profileData: null,
 			showUsernamePrompt: false,
 			usernameInput: '',
+			isSignUp: false,
+			loginEmail: '',
+			loginPassword: '',
 			error: '',
-			isLoading: false,
-			lastAnimatedId: null,
-			hasJoinedChat: false,
-			timeoutMsgRef: null
+			pendingUser: null,
+			lastAnimatedId: null
 		};
 
 		const messages = [];
 		const loadedIds = new Set();
 		const typingSound = new Audio('./sounds/terminal_cursor.wav');
 		const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
-
-		// Cookie functions
-		function setCookie(name, value, days = 365) {
-			const expires = new Date();
-			expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-			document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-		}
-
-		function getCookie(name) {
-			const nameEQ = name + "=";
-			const ca = document.cookie.split(';');
-			for (let c of ca) {
-				c = c.trim();
-				if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
-			}
-			return null;
-		}
-
-		// Load saved preferences from cookies
-		function loadPreferences() {
-			const savedUsername = getCookie('username');
-			const savedColor = getCookie('color');
-			const savedBorder = getCookie('borderStyle');
-			const savedAbout = getCookie('about');
-			
-			if (savedUsername) state.usernameInput = savedUsername;
-			if (savedColor) state.color = savedColor;
-			if (savedBorder) state.borderStyle = savedBorder;
-			if (savedAbout) state.about = decodeURIComponent(savedAbout);
-		}
-
-		// Save preferences to cookies
-		function savePreferences() {
-			setCookie('username', state.username);
-			setCookie('color', state.color);
-			setCookie('borderStyle', state.borderStyle);
-			setCookie('about', encodeURIComponent(state.about));
-		}
 
 		// Setup input handlers once
 		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
@@ -385,59 +328,42 @@
 			if (loadedIds.has(id)) return;
 			loadedIds.add(id);
 
-			const msg = { id, ...snapshot.val() };
-			messages.push(msg);
-			if (messages.length > 30) messages.shift();
+			messages.push({ id, ...snapshot.val() });
+			if (messages.length > 15) messages.shift();
 
-			addMessageToDOM(msg, true);
+			// Always animate new messages (not just the last one sent by current user)
+			addMessageToDOM({ id, ...snapshot.val() }, true);
 		});
 
 		function addMessageToDOM(msg, animate) {
 			const container = document.getElementById('messagesWrapper');
 			if (!container) return;
 
-			while (container.children.length >= 30) {
+			while (container.children.length >= 15) {
 				container.removeChild(container.firstChild);
 			}
 
 			const el = document.createElement('div');
-			
-			// Check if it's a system message
-			if (msg.type === 'system') {
-				el.className = 'system-message';
-				// Parse the message to highlight the username
-				const parts = msg.text.split(' ');
-				if (parts.length >= 2) {
-					const username = parts[0];
-					const action = parts.slice(1).join(' ');
-					const userColor = msg.userColor ? `hsl(${msg.userColor},100%,50%)` : 'white';
-					el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}`;
-				} else {
-					el.textContent = msg.text;
-				}
-			} else {
-				el.className = 'message';
-				const light = `hsl(${msg.color},100%,50%)`;
-				const dark = `hsl(${msg.color},100%,30%)`;
-				el.style.color = light;
-				el.style.borderColor = dark;
-				el.style.borderStyle = msg.borderStyle;
-				el.onclick = () => openProfile(msg.userId);
-				el.innerHTML = `
-					<span class="name" style="color:${dark}"></span>
-					<span class="text"></span>
-					<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
-				`;
-				
-				if (animate && state.user) {
-					animateMessage(el, msg.userName, msg.text);
-				} else {
-					el.querySelector('.name').textContent = msg.userName;
-					el.querySelector('.text').textContent = msg.text;
-				}
-			}
-			
+			el.className = 'message';
+			const light = `hsl(${msg.color},100%,50%)`;
+			const dark = `hsl(${msg.color},100%,30%)`;
+			el.style.color = light;
+			el.style.borderColor = dark;
+			el.style.borderStyle = msg.borderStyle;
+			el.onclick = () => openProfile(msg.userId);
+			el.innerHTML = `
+				<span class="name" style="color:${dark}"></span>
+				<span class="text"></span>
+				<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
+			`;
 			container.appendChild(el);
+
+			if (animate && state.user) {
+				animateMessage(el, msg.userName, msg.text);
+			} else {
+				el.querySelector('.name').textContent = msg.userName;
+				el.querySelector('.text').textContent = msg.text;
+			}
 
 			const messagesContainer = document.getElementById('messages');
 			if (messagesContainer) {
@@ -448,8 +374,6 @@
 		function animateMessage(el, userName, text) {
 			const nameEl = el.querySelector('.name');
 			const textEl = el.querySelector('.text');
-			if (!nameEl || !textEl) return; // System message
-			
 			let ni = 0, ti = 0;
 			function type() {
 				let typed = false;
@@ -463,8 +387,9 @@
 				}
 				
 				if (typed) {
+					// Play typing sound on each character
 					typingSound.currentTime = 0;
-					typingSound.play().catch(() => {});
+					typingSound.play().catch(() => {}); // Ignore errors if sound fails
 				}
 				
 				document.getElementById('messages').scrollTop = 9999;
@@ -472,6 +397,7 @@
 				if (ni < userName.length || ti < text.length) {
 					setTimeout(type, 80);
 				} else {
+					// Message finished - play completion sound
 					finishSound.currentTime = 0;
 					finishSound.play().catch(() => {});
 				}
@@ -492,21 +418,11 @@
 				text: state.input.trim(),
 				timestamp: Date.now(),
 				color: state.color,
-				borderStyle: state.borderStyle,
-				type: 'user'
+				borderStyle: state.borderStyle
 			});
 			state.lastAnimatedId = msgRef.key;
 			state.input = '';
 			document.getElementById('messageInput').value = '';
-		}
-
-		async function sendSystemMessage(text, userColor = null) {
-			await push(ref(db, 'messages'), {
-				text: text,
-				timestamp: Date.now(),
-				type: 'system',
-				userColor: userColor
-			});
 		}
 
 		async function openProfile(uid) {
@@ -514,61 +430,79 @@
 			const snap = await get(userRef);
 			const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
 			state.profileUid = uid;
-			state.profileData = { ...data }; // Create a copy to edit
+			state.profileData = data;
+			if (uid === state.user?.uid) {
+				state.color = data.color || '0';
+				state.borderStyle = data.borderStyle || 'solid';
+			}
 			state.showProfile = true;
 			renderOverlay();
 		}
 
-		async function enterChat() {
-			state.isLoading = true;
+		async function saveProfile() {
+			if (!state.user) return;
+			const userRef = ref(db, `users/${state.user.uid}`);
+			const snap = await get(userRef);
+			await set(userRef, { 
+				...snap.val(), 
+				about: state.profileData.about
+			});
+			state.showProfile = false;
 			renderOverlay();
+		}
+
+		async function handleAuth() {
+			const email = state.loginEmail.trim();
+			const pw = state.loginPassword.trim();
+			if (!email || !pw) {
+				state.error = 'Enter email and password';
+				renderOverlay();
+				return;
+			}
 			try {
-				await signInAnonymously(auth);
+				if (state.isSignUp) {
+					const cred = await createUserWithEmailAndPassword(auth, email, pw);
+					state.pendingUser = cred.user;
+					state.usernameInput = '';
+					state.showUsernamePrompt = true;
+				} else {
+					await signInWithEmailAndPassword(auth, email, pw);
+				}
+				state.error = '';
+				renderOverlay();
 			} catch (err) {
-				console.error('Auth error:', err);
-				state.error = 'Failed to enter chat';
-				state.isLoading = false;
+				state.error = err.code === 'auth/email-already-in-use' ? 'Email taken' :
+											err.code === 'auth/weak-password' ? 'Password too weak' :
+											err.code === 'auth/user-not-found' ? 'User not found' :
+											err.code === 'auth/wrong-password' ? 'Wrong password' : 'Auth failed';
 				renderOverlay();
 			}
 		}
 
 		async function confirmUsername() {
 			const un = state.usernameInput.trim();
-			if (!un) {
-				state.error = 'Enter a username';
+			if (!un) return;
+			const lower = un.toLowerCase();
+			const snap = await get(ref(db, 'claimedUsernames'));
+			const existing = snap.val() || {};
+			if (existing[lower] && existing[lower] !== state.pendingUser.uid) {
+				state.error = 'Username taken';
 				renderOverlay();
 				return;
 			}
-			
-			if (un.length < 2 || un.length > 20) {
-				state.error = 'Username must be 2-20 characters';
-				renderOverlay();
-				return;
-			}
-			
-			// Save to Firebase
-			await set(ref(db, `users/${state.user.uid}`), {
+			await set(ref(db, `claimedUsernames/${lower}`), state.pendingUser.uid);
+			await set(ref(db, `users/${state.pendingUser.uid}`), {
 				username: un,
 				about: state.about,
 				color: state.color,
 				borderStyle: state.borderStyle
 			});
-			
+			state.user = state.pendingUser;
 			state.username = un;
 			state.showUsernamePrompt = false;
+			state.pendingUser = null;
 			state.error = '';
-			
-			// Save preferences to cookies
-			savePreferences();
-			
-			// Send join message
-			if (!state.hasJoinedChat) {
-				await sendSystemMessage(`${un} joined`, state.color);
-				state.hasJoinedChat = true;
-				// Setup presence after setting username
-				await setupPresence();
-			}
-			
+			state.about = '';
 			renderOverlay();
 		}
 
@@ -576,37 +510,17 @@
 			const existing = document.getElementById('overlay');
 			if (existing) existing.remove();
 
-			// Show loading/enter screen for non-authenticated users
-			if (!state.user) {
-				const div = document.createElement('div');
-				div.id = 'overlay';
-				div.className = 'login-overlay';
-				div.innerHTML = `
-					<h1>CHAT</h1>
-					${state.error ? `<div class="error">${state.error}</div>` : ''}
-					${state.isLoading ? 
-						'<div class="loading"></div>' : 
-						'<button class="enter-btn" id="enterBtn">ENTER</button>'
-					}
-				`;
-				document.body.appendChild(div);
-				if (!state.isLoading) {
-					document.getElementById('enterBtn').onclick = enterChat;
-				}
-				return;
-			}
-
-			// Username prompt for new users
 			if (state.showUsernamePrompt) {
 				const div = document.createElement('div');
 				div.id = 'overlay';
 				div.className = 'modal';
 				div.innerHTML = `
 					<div class="modal-content">
-						<div class="modal-header">CHOOSE USERNAME</div>
+						<div class="modal-header">CLAIM USERNAME</div>
 						${state.error ? `<div class="error">${state.error}</div>` : ''}
 						<input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username" autocomplete="off">
-						<input id="aboutInput" type="text" maxlength="50" placeholder="Status (optional)" style="margin:0;color:white" value="${state.about}">
+						<div style="color:white;margin-top:1rem;margin-bottom:0.5rem">ABOUT ME</div>
+						<input id="aboutInput" type="text" maxlength="100" placeholder="Tell us about yourself..." style="margin:0;color:white" value="${state.about}">
 						<div class="style-section">
 							<span class="style-label">COLOR</span>
 							<div class="color-grid" id="colorGrid">
@@ -617,7 +531,7 @@
 								${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
 							</div>
 						</div>
-						<button id="confirmBtn">START CHATTING</button>
+						<button id="confirmBtn">CONFIRM</button>
 					</div>
 				`;
 				document.body.appendChild(div);
@@ -647,100 +561,81 @@
 				return;
 			}
 
-			// Profile modal
+			if (!state.user) {
+				const div = document.createElement('div');
+				div.id = 'overlay';
+				div.className = 'login-overlay';
+				div.innerHTML = `
+					<h1>CHAT</h1>
+					${state.error ? `<div class="error">${state.error}</div>` : ''}
+					<div class="login-form">
+						<input type="email" id="emailInput" class="login-input" placeholder="Email" value="${state.loginEmail}">
+						<input type="password" id="passwordInput" class="login-input" placeholder="Password" value="${state.loginPassword}">
+						<button class="login-btn" id="authBtn">${state.isSignUp ? 'SIGN UP' : 'SIGN IN'}</button>
+						<div class="toggle-link" id="toggleLink">${state.isSignUp ? 'Already have account? Sign in' : "Don't have account? Sign up"}</div>
+					</div>
+				`;
+				document.body.appendChild(div);
+				const emailInput = document.getElementById('emailInput');
+				const passwordInput = document.getElementById('passwordInput');
+				
+				// Ensure inputs are editable
+				emailInput.removeAttribute('readonly');
+				passwordInput.removeAttribute('readonly');
+				
+				emailInput.oninput = e => {
+					state.loginEmail = e.target.value;
+				};
+				passwordInput.oninput = e => {
+					state.loginPassword = e.target.value;
+				};
+				passwordInput.onkeypress = e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						handleAuth();
+					}
+				};
+				emailInput.onkeypress = e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						passwordInput.focus();
+					}
+				};
+				document.getElementById('authBtn').onclick = handleAuth;
+				document.getElementById('toggleLink').onclick = () => { 
+					state.isSignUp = !state.isSignUp; 
+					state.error = ''; 
+					renderOverlay(); 
+				};
+				return;
+			}
+
 			if (state.showProfile) {
 				const div = document.createElement('div');
 				div.id = 'overlay';
 				div.className = 'modal';
 				const userColor = `hsl(${state.profileData?.color || '0'},100%,50%)`;
-				const isOwnProfile = state.profileUid === state.user?.uid;
 				div.innerHTML = `
 					<div class="modal-content" style="border-color: ${userColor}">
 						<div class="modal-header" style="color: ${userColor}">
 							<span>${state.profileData?.username || 'User'}</span>
 							<button class="close-btn" id="closeBtn">CLOSE</button>
 						</div>
-						${isOwnProfile ? `
-							<div style="color:${userColor};margin-bottom:0.5rem">CHANGE USERNAME</div>
-							<input id="newUsernameInput" type="text" maxlength="20" placeholder="New username (leave empty to keep)" style="border-color: ${userColor}">
-						` : ''}
-						<div style="color:${userColor};margin-bottom:0.5rem">STATUS</div>
-						<textarea id="aboutInput" maxlength="200" style="border-color: ${userColor}; min-height: 60px" ${!isOwnProfile ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
-						${isOwnProfile ? `
-							<div class="style-section">
-								<span class="style-label">COLOR</span>
-								<div class="color-grid" id="colorGrid">
-									${COLORS.map(h => `<div class="color-option ${state.profileData.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.profileData.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
-								</div>
-								<span class="style-label">BORDER</span>
-								<div class="border-options">
-									${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.profileData.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.profileData.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
-								</div>
-							</div>
-							<button id="saveBtn" style="background: ${userColor}; color: #0b0b0d">SAVE CHANGES</button>
-						` : ''}
+						<div style="color:${userColor};margin-bottom:0.5rem">ABOUT ME</div>
+						<textarea id="aboutInput" maxlength="500" style="border-color: ${userColor}" ${state.profileUid !== state.user?.uid ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
+						${state.profileUid === state.user?.uid ? '<button id="saveBtn" style="background: '+userColor+'; color: #0b0b0d">SAVE</button>' : ''}
 					</div>
 				`;
 				document.body.appendChild(div);
 				div.onclick = e => e.target.id === 'overlay' && (state.showProfile = false, renderOverlay());
 				document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
-				
-				if (isOwnProfile) {
+				if (state.profileUid === state.user?.uid) {
 					document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
-					
-					// Add color and border style handlers
-					document.querySelectorAll('.color-option').forEach(el => {
-						el.onclick = () => {
-							state.profileData.color = el.dataset.color;
-							renderOverlay();
-						};
-					});
-					document.querySelectorAll('.border-option').forEach(el => {
-						el.onclick = () => {
-							state.profileData.borderStyle = el.dataset.style;
-							renderOverlay();
-						};
-					});
-					
 					document.getElementById('saveBtn').onclick = async () => {
 						if (!state.user) return;
-						const newUsername = document.getElementById('newUsernameInput').value.trim();
-						const oldUsername = state.username;
-						
-						// Check if username is changing
-						if (newUsername && newUsername !== oldUsername) {
-							if (newUsername.length < 2 || newUsername.length > 20) {
-								alert('Username must be 2-20 characters');
-								return;
-							}
-							
-							// Send username change message
-							await sendSystemMessage(`${oldUsername} is now ${newUsername}`, state.profileData.color);
-							state.username = newUsername;
-						}
-						
-						// Update all user data
 						const userRef = ref(db, `users/${state.user.uid}`);
-						await set(userRef, {
-							username: state.username,
-							about: state.profileData.about,
-							color: state.profileData.color,
-							borderStyle: state.profileData.borderStyle
-						});
-						
-						// Update local state
-						state.about = state.profileData.about;
-						state.color = state.profileData.color;
-						state.borderStyle = state.profileData.borderStyle;
-						
-						// Save to cookies
-						savePreferences();
-						
-						// Update presence with new info
-						if (newUsername) {
-							await setupPresence();
-						}
-						
+						const snap = await get(userRef);
+						await set(userRef, { ...snap.val(), about: state.profileData.about });
 						state.showProfile = false;
 						renderOverlay();
 					};
@@ -757,48 +652,11 @@
 			const userColor = `hsl(${state.color},100%,50%)`;
 			div.innerHTML = `
 				<span class="username" id="usernameBtn" style="color: ${userColor}; border-color: ${userColor}">${state.username}</span>
-				<button class="logout-btn" id="logoutBtn">LEAVE</button>
+				<button class="logout-btn" id="logoutBtn">LOGOUT</button>
 			`;
 			document.body.appendChild(div);
 			document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
-			document.getElementById('logoutBtn').onclick = async () => {
-				try {
-					// Cancel the timeout message since this is a clean logout
-					if (state.timeoutMsgRef) {
-						await onDisconnect(state.timeoutMsgRef).cancel();
-					}
-					
-					// Send leave message before signing out
-					if (state.username) {
-						await sendSystemMessage(`${state.username} left`, state.color);
-					}
-					
-					// Remove presence
-					if (state.user) {
-						const presenceRef = ref(db, `presence/${state.user.uid}`);
-						await onDisconnect(presenceRef).cancel();
-						await set(presenceRef, null);
-					}
-					
-					// Clear user data and sign out
-					state.user = null;
-					state.username = '';
-					state.hasJoinedChat = false;
-					state.timeoutMsgRef = null;
-					
-					await signOut(auth);
-					// Immediately update UI after signing out
-					renderOverlay();
-				} catch (err) {
-					console.error('Logout error:', err);
-					// Force logout even if there's an error
-					state.user = null;
-					state.username = '';
-					state.hasJoinedChat = false;
-					await signOut(auth);
-					renderOverlay();
-				}
-			};
+			document.getElementById('logoutBtn').onclick = () => signOut(auth);
 			
 			// Update input color
 			const messageInput = document.getElementById('messageInput');
@@ -816,85 +674,28 @@
 			document.head.appendChild(style);
 		}
 
-		// Setup presence system for timeout detection
-		async function setupPresence() {
-			if (!state.user || !state.username) return;
-			
-			const presenceRef = ref(db, `presence/${state.user.uid}`);
-			const connectedRef = ref(db, '.info/connected');
-			
-			// Listen to connection state
-			onValue(connectedRef, async (snapshot) => {
-				if (snapshot.val() === true && state.user && state.username) {
-					// User is online
-					await set(presenceRef, {
-						username: state.username,
-						color: state.color,
-						online: true,
-						timestamp: Date.now()
-					});
-					
-					// Setup disconnect hook - this runs on the server when connection is lost
-					await onDisconnect(presenceRef).remove();
-					
-					// Also queue a timeout message to be sent on disconnect
-					// Create a unique key for the timeout message
-					const timeoutMsgKey = `timeout_${state.user.uid}_${Date.now()}`;
-					const timeoutMsgRef = ref(db, `messages/${timeoutMsgKey}`);
-					
-					await onDisconnect(timeoutMsgRef).set({
-						text: `${state.username} timed out`,
-						timestamp: Date.now(),
-						type: 'system',
-						userColor: state.color
-					});
-					
-					// Store the timeout message reference so we can cancel it on clean logout
-					state.timeoutMsgRef = timeoutMsgRef;
-				}
-			});
-		}
-
 		onAuthStateChanged(auth, async user => {
 			if (user) {
-				// Load preferences from cookies first
-				loadPreferences();
-				
 				const snap = await get(ref(db, `users/${user.uid}`));
-				if (!snap.exists() || !snap.val()?.username) {
-					// New user - show username prompt with cookie values pre-filled
-					state.user = user;
+				if (!snap.exists() || !snap.val().username) {
+					state.pendingUser = user;
+					state.usernameInput = user.email?.split('@')[0] || '';
 					state.showUsernamePrompt = true;
 				} else {
-					// Returning user (same session)
 					state.user = user;
 					const data = snap.val();
 					state.username = data.username;
-					state.color = data.color || '180';
+					state.color = data.color || '0';
 					state.borderStyle = data.borderStyle || 'solid';
-					state.about = data.about || '';
 					state.showUsernamePrompt = false;
-					
-					// Send join message if not already sent
-					if (!state.hasJoinedChat) {
-						await sendSystemMessage(`${state.username} joined`, state.color);
-						state.hasJoinedChat = true;
-						// Setup presence after joining
-						await setupPresence();
-					}
 				}
 			} else {
 				state.user = null;
 				state.username = '';
-				state.showUsernamePrompt = false;
-				state.hasJoinedChat = false;
 			}
-			state.isLoading = false;
 			renderOverlay();
 		});
 
-		// Load preferences on startup
-		loadPreferences();
 		renderOverlay();
 	</script>
 </body>
