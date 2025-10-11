@@ -65,17 +65,18 @@
 		#header-area {
 			border-bottom: 2px solid #333;
 			display: flex;
-			padding: 0.5rem;
+			padding: 0.25rem 0.5rem;
 			align-items: center;
-			gap: 0.5rem;
-			flex-wrap: wrap;
+			gap: 0.25rem;
+			flex-wrap: nowrap;
+			overflow-x: auto;
 		}
 		#header-area input, #header-area select {
 			background: #0b0b0d;
 			color: white;
 			border: 2px solid #666;
-			padding: 4px 8px;
-			font-size: 1rem;
+			padding: 2px 6px;
+			font-size: 0.85rem;
 			outline: none;
 		}
 		#header-area select {
@@ -86,28 +87,30 @@
 		}
 		#username-input {
 			flex: 0 0 auto;
-			width: 10ch;
-			min-width: 10ch;
-			max-width: 10ch;
+			width: 8ch;
+			min-width: 8ch;
+			max-width: 8ch;
 		}
-		#color-select, #border-select {
-			min-width: 80px;
+		#color-select, #border-select, #sound-theme-select, #animations-select {
+			min-width: 60px;
 		}
 		#update-btn {
 			color: #0b0b0d;
-			padding: 4px 12px;
+			padding: 2px 8px;
 			border: 2px solid;
 			cursor: pointer;
-			font-size: 1rem;
+			font-size: 0.85rem;
+			white-space: nowrap;
 		}
 		#update-btn:hover {
 			opacity: 0.8;
 		}
 		.header-divider {
-			width: 2px;
-			height: 20px;
+			width: 1px;
+			height: 16px;
 			background: #333;
-			margin: 0 0.25rem;
+			margin: 0;
+			flex-shrink: 0;
 		}
 		#animations-toggle {
 			display: flex;
@@ -131,14 +134,15 @@
 			pointer-events: none;
 		}
 		.logout-btn { 
-			padding: 6px 16px;
+			padding: 2px 8px;
 			background: rgba(11,11,13,0.9);
 			border: 2px solid hsl(0,100%,50%);
 			backdrop-filter: blur(10px);
 			cursor: pointer;
 			color: hsl(0,100%,50%);
-			font-size: 1rem;
+			font-size: 0.85rem;
 			pointer-events: auto;
+			white-space: nowrap;
 		}
 		
 		#messages {
@@ -216,21 +220,23 @@
 		#input-area { border-top: 2px solid #333; display: flex; }
 		#input-area input {
 			flex: 1;
-			padding: 1rem;
-			font-size: 1.5rem;
+			padding: 0.5rem;
+			font-size: 1rem;
 			background: #0b0b0d;
 			color: hsl(var(--user-color, 180),100%,50%);
 			border: none;
 			outline: none;
+			min-width: 0;
 		}
 		#send-btn {
-			padding: 1rem 1.5rem;
-			font-size: 1.5rem;
+			padding: 0.5rem 1rem;
+			font-size: 1rem;
 			background: #0b0b0d;
 			color: white;
 			border: none;
 			border-left: 2px solid #333;
 			cursor: pointer;
+			flex-shrink: 0;
 		}
 		
 		.modal {
