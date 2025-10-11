@@ -65,16 +65,16 @@
 		#header-area {
 			border-bottom: 2px solid #333;
 			display: flex;
-			padding: 0.75rem 1rem;
+			padding: 0.5rem;
 			align-items: center;
-			gap: 1rem;
+			gap: 0.5rem;
 			flex-wrap: wrap;
 		}
 		#header-area input, #header-area select {
 			background: #0b0b0d;
 			color: white;
 			border: 2px solid #666;
-			padding: 6px 10px;
+			padding: 4px 8px;
 			font-size: 1rem;
 			outline: none;
 		}
@@ -91,13 +91,12 @@
 			max-width: 10ch;
 		}
 		#color-select, #border-select {
-			min-width: 100px;
+			min-width: 80px;
 		}
 		#update-btn {
-			background: hsl(180,100%,50%);
 			color: #0b0b0d;
-			padding: 6px 16px;
-			border: 2px solid hsl(180,100%,50%);
+			padding: 4px 12px;
+			border: 2px solid;
 			cursor: pointer;
 			font-size: 1rem;
 		}
@@ -106,9 +105,9 @@
 		}
 		.header-divider {
 			width: 2px;
-			height: 24px;
+			height: 20px;
 			background: #333;
-			margin: 0 0.5rem;
+			margin: 0 0.25rem;
 		}
 		#animations-toggle {
 			display: flex;
@@ -264,11 +263,6 @@
 			outline: none;
 			margin: 10px 0;
 		}
-		.modal textarea { color: white; min-height: 60px; resize: vertical; }
-		.modal textarea:read-only { 
-			opacity: 0.7;
-			cursor: not-allowed;
-		}
 		.modal button {
 			background: white;
 			color: #0b0b0d;
@@ -278,14 +272,6 @@
 			width: 100%;
 			font-size: 16px;
 			margin-top: 10px;
-		}
-		.close-btn {
-			background: transparent !important;
-			color: hsl(0,100%,50%) !important;
-			border: 2px solid hsl(0,100%,50%) !important;
-			padding: 4px 12px !important;
-			width: auto !important;
-			margin: 0 !important;
 		}
 		.error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
 		
@@ -398,31 +384,44 @@
 		
 		const soundThemes = {
 			default: {
-				typing: './sounds/terminal_cursor.wav',
-				finish: './sounds/R_Terminal_ping.wav',
-				enter: './sounds/R_TerminalLoad.wav'
+				typing: './sounds/default/type.wav',
+				finish: './sounds/default/message.wav',
+				enter: './sounds/default/load.wav',
+				userJoined: './sounds/default/join.wav'
+			},
+			msn: {
+				typing: './sounds/msn/type.wav',
+				finish: './sounds/msn/message.wav',
+				enter: './sounds/msn/load.wav',
+				userJoined: './sounds/msn/join.wav'
 			},
 			silent: {
 				typing: null,
 				finish: null,
-				enter: null
+				enter: null,
+				userJoined: null
 			}
 		};
 		
 		let typingSound = new Audio(soundThemes.default.typing);
 		let finishSound = new Audio(soundThemes.default.finish);
 		let enterSound = new Audio(soundThemes.default.enter);
+		let userJoinedSound = new Audio(soundThemes.default.userJoined);
 		
 		function updateSoundTheme(theme) {
 			state.soundTheme = theme;
-			if (soundThemes[theme].typing) {
-				typingSound = new Audio(soundThemes[theme].typing);
+			const sounds = soundThemes[theme];
+			if (sounds.typing) {
+				typingSound = new Audio(sounds.typing);
 			}
-			if (soundThemes[theme].finish) {
-				finishSound = new Audio(soundThemes[theme].finish);
+			if (sounds.finish) {
+				finishSound = new Audio(sounds.finish);
 			}
-			if (soundThemes[theme].enter) {
-				enterSound = new Audio(soundThemes[theme].enter);
+			if (sounds.enter) {
+				enterSound = new Audio(sounds.enter);
+			}
+			if (sounds.userJoined) {
+				userJoinedSound = new Audio(sounds.userJoined);
 			}
 		}
 
@@ -460,7 +459,6 @@
 			el.className = isSystem ? 'system-message' : 'message';
 			
 			if (isSystem) {
-				// Check if this has color transition (oldColor -> newColor)
 				if (msg.oldColor && msg.newColor) {
 					const parts = msg.text.split(' is now ');
 					if (parts.length === 2) {
@@ -470,15 +468,19 @@
 						const newColorStyle = `hsl(${msg.newColor},100%,50%)`;
 						el.innerHTML = `<span class="highlight" style="color: ${oldColorStyle}">${oldName}</span> is now <span class="highlight" style="color: ${newColorStyle}">${newName}</span><span class="time">${formatTime(msg.timestamp)}</span>`;
 					} else {
-						// Single word messages like "joined", "left", "timed out"
 						const words = msg.text.split(' ');
 						const username = words[0];
 						const action = words.slice(1).join(' ');
 						const userColor = msg.oldColor ? `hsl(${msg.oldColor},100%,50%)` : 'white';
 						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
+						
+						// Play sound if user joined
+						if (action === 'joined' && animate && state.soundTheme !== 'silent') {
+							userJoinedSound.currentTime = 0;
+							userJoinedSound.play().catch(() => {});
+						}
 					}
 				} else {
-					// Regular system message
 					const parts = msg.text.split(' ');
 					if (parts.length >= 2) {
 						const username = parts[0];
@@ -506,7 +508,6 @@
 				} else {
 					el.querySelector('.name').textContent = msg.userName;
 					el.querySelector('.text').textContent = msg.text;
-					// Play finish sound even without animation
 					if (animate && state.user && state.soundTheme !== 'silent') {
 						finishSound.currentTime = 0;
 						finishSound.play().catch(() => {});
@@ -618,7 +619,6 @@
 			
 			await set(ref(db, `users/${state.user.uid}`), {
 				username: un,
-				about: state.about,
 				color: state.color,
 				borderStyle: state.borderStyle
 			});
@@ -632,7 +632,6 @@
 				state.hasJoinedChat = true;
 				await setupPresence();
 				
-				// Play enter sound
 				if (state.soundTheme !== 'silent') {
 					enterSound.currentTime = 0;
 					enterSound.play().catch(() => {});
@@ -645,6 +644,9 @@
 		function renderOverlay() {
 			const existing = document.getElementById('overlay');
 			if (existing) existing.remove();
+			
+			const existing2 = document.getElementById('controls');
+			if (existing2) existing2.remove();
 
 			if (!state.user) {
 				const div = document.createElement('div');
@@ -712,33 +714,57 @@
 				document.getElementById('confirmBtn').onclick = confirmUsername;
 				return;
 			}
-			if (existing2) existing2.remove();
-			
+
 			const header = document.getElementById('header-area');
 			if (header) {
 				const userColor = `hsl(${state.color},100%,50%)`;
 				header.innerHTML = `
 					<input type="text" id="username-input" value="${state.username}" maxlength="10" placeholder="Username" style="border-color: ${userColor}; color: ${userColor}">
 					<select id="color-select" style="border-color: ${userColor};">
-						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">● Color ${h}°</option>`).join('')}
+						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">Hue ${h}°</option>`).join('')}
 					</select>
 					<select id="border-select" style="border-color: ${userColor};">
-						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Solid</option>
-						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Dashed</option>
-						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Dotted</option>
+						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>─</option>
+						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>╌</option>
+						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>┄</option>
 					</select>
-					<button id="update-btn">UPDATE</button>
+					<button id="update-btn" style="background: ${userColor}; border-color: ${userColor};">UPDATE</button>
 					<div class="header-divider"></div>
 					<select id="sound-theme-select" style="border-color: ${userColor};">
-						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound: Default</option>
-						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound: Silent</option>
+						<option value="default" ${state.soundTheme==='default'?'selected':''}>Default</option>
+						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>MSN</option>
+						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Silent</option>
 					</select>
-					<label id="animations-toggle">
-						<input type="checkbox" id="animations-checkbox" ${state.animationsEnabled?'checked':''}>
-						<span>Animations</span>
-					</label>
+					<select id="animations-select" style="border-color: ${userColor};">
+						<option value="true" ${state.animationsEnabled?'selected':''}>FX: On</option>
+						<option value="false" ${!state.animationsEnabled?'selected':''}>FX: Off</option>
+					</select>
 					<button class="logout-btn" id="logoutBtn" style="margin-left: auto;">LEAVE</button>
 				`;
+				
+				// Live preview: update colors when dropdowns change
+				document.getElementById('color-select').onchange = (e) => {
+					const newColor = e.target.value;
+					const previewColor = `hsl(${newColor},100%,50%)`;
+					
+					// Update all elements except UPDATE button and message input text
+					document.body.style.borderColor = previewColor;
+					document.getElementById('username-input').style.borderColor = previewColor;
+					document.getElementById('username-input').style.color = previewColor;
+					document.getElementById('color-select').style.borderColor = previewColor;
+					document.getElementById('border-select').style.borderColor = previewColor;
+					document.getElementById('sound-theme-select').style.borderColor = previewColor;
+					document.getElementById('animations-select').style.borderColor = previewColor;
+					
+					// Update scrollbar
+					let style = document.getElementById('dynamic-scrollbar-preview');
+					if (!style) {
+						style = document.createElement('style');
+						style.id = 'dynamic-scrollbar-preview';
+						document.head.appendChild(style);
+					}
+					style.textContent = `#messages::-webkit-scrollbar-thumb { background: ${previewColor}; }`;
+				};
 				
 				document.getElementById('update-btn').onclick = async () => {
 					const newUsername = document.getElementById('username-input').value.trim();
@@ -757,32 +783,27 @@
 						return;
 					}
 					
-					// Check if anything changed
 					const nameChanged = newUsername !== oldUsername;
 					const colorChanged = newColor !== oldColor;
 					
 					if (nameChanged || colorChanged) {
-						// Build message based on what changed
 						let message = `${oldUsername} is now ${newUsername}`;
 						await sendSystemMessage(message, oldColor, newColor);
 						state.username = newUsername;
 					}
 					
-					// Update all settings
 					state.color = newColor;
 					state.borderStyle = newBorderStyle;
 					
 					const userRef = ref(db, `users/${state.user.uid}`);
 					await set(userRef, {
 						username: state.username,
-						about: state.about,
 						color: state.color,
 						borderStyle: state.borderStyle
 					});
 					
 					await setupPresence();
 					
-					// Update UI colors
 					const messageInput = document.getElementById('messageInput');
 					if (messageInput) {
 						messageInput.style.color = `hsl(${state.color},100%,50%)`;
@@ -803,8 +824,8 @@
 					updateSoundTheme(e.target.value);
 				};
 				
-				document.getElementById('animations-checkbox').onchange = (e) => {
-					state.animationsEnabled = e.target.checked;
+				document.getElementById('animations-select').onchange = (e) => {
+					state.animationsEnabled = e.target.value === 'true';
 				};
 			}
 			
@@ -843,15 +864,15 @@
 			
 			const messageInput = document.getElementById('messageInput');
 			if (messageInput) {
-				messageInput.style.color = userColor;
+				messageInput.style.color = `hsl(${state.color},100%,50%)`;
 			}
 			
-			document.body.style.borderColor = userColor;
+			document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
 			const style = document.createElement('style');
 			style.id = 'dynamic-scrollbar';
 			const existingStyle = document.getElementById('dynamic-scrollbar');
 			if (existingStyle) existingStyle.remove();
-			style.textContent = `#messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
+			style.textContent = `#messages::-webkit-scrollbar-thumb { background: hsl(${state.color},100%,50%); }`;
 			document.head.appendChild(style);
 		}
 
@@ -907,7 +928,6 @@
 						state.hasJoinedChat = true;
 						await setupPresence();
 						
-						// Play enter sound
 						if (state.soundTheme !== 'silent') {
 							enterSound.currentTime = 0;
 							enterSound.play().catch(() => {});
