@@ -65,27 +65,82 @@
 		#header-area {
 			border-bottom: 2px solid #333;
 			display: flex;
-			padding: 1rem;
+			padding: 0.75rem 1rem;
 			align-items: center;
-			justify-content: space-between;
+			gap: 1rem;
+			flex-wrap: wrap;
+		}
+		#header-area input, #header-area select {
+			background: #0b0b0d;
+			color: white;
+			border: 2px solid #666;
+			padding: 6px 10px;
+			font-size: 1rem;
+			outline: none;
+		}
+		#header-area select {
+			cursor: pointer;
+		}
+		#header-area select option {
+			background: #0b0b0d;
+		}
+		#username-input {
+			flex: 0 0 auto;
+			width: 10ch;
+			min-width: 10ch;
+			max-width: 10ch;
+		}
+		#color-select, #border-select {
+			min-width: 100px;
+		}
+		#update-btn {
+			background: hsl(180,100%,50%);
+			color: #0b0b0d;
+			padding: 6px 16px;
+			border: 2px solid hsl(180,100%,50%);
+			cursor: pointer;
+			font-size: 1rem;
+		}
+		#update-btn:hover {
+			opacity: 0.8;
+		}
+		.header-divider {
+			width: 2px;
+			height: 24px;
+			background: #333;
+			margin: 0 0.5rem;
+		}
+		#animations-toggle {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			cursor: pointer;
+			padding: 4px 8px;
+			border: 2px solid #666;
+			background: #0b0b0d;
+		}
+		#animations-toggle input[type="checkbox"] {
+			cursor: pointer;
 		}
 		.floating-controls {
 			position: fixed;
 			top: 1rem;
 			left: 1rem;
-			display: flex;
+			display: none;
 			gap: 10px;
 			z-index: 1000;
+			pointer-events: none;
 		}
-		.username, .logout-btn { 
-			padding: 8px 16px;
+		.logout-btn { 
+			padding: 6px 16px;
 			background: rgba(11,11,13,0.9);
-			border: 2px solid;
+			border: 2px solid hsl(0,100%,50%);
 			backdrop-filter: blur(10px);
 			cursor: pointer;
+			color: hsl(0,100%,50%);
+			font-size: 1rem;
+			pointer-events: auto;
 		}
-		.username { color: hsl(180,100%,50%); border-color: hsl(180,100%,50%); }
-		.logout-btn { color: hsl(0,100%,50%); border-color: hsl(0,100%,50%); }
 		
 		#messages {
 			flex: 1;
@@ -118,7 +173,6 @@
 			align-self: flex-end;
 			background: #0b0b0d;
 			border: 2px solid;
-			cursor: pointer;
 			transition: transform 0.1s;
 		}
 		.message:hover { transform: translateX(-2px); }
@@ -128,18 +182,26 @@
 		
 		.system-message {
 			align-self: flex-start;
-			font-size: 1.2rem;
+			font-size: 1.5rem;
 			color: white;
 			background: transparent;
 			border: 1px dashed #666;
-			padding: 0.3rem 0.8rem;
-			margin: 0.4rem 0;
-			max-width: 50%;
-			cursor: default;
+			padding: 0.5rem 1rem;
+			margin: 0.6rem 0;
+			max-width: 60%;
+			position: relative;
 		}
 		.system-message:hover { transform: none; }
 		.system-message .highlight {
 			font-weight: bold;
+		}
+		.system-message .time {
+			position: absolute;
+			background: #0b0b0d;
+			bottom: -0.6em;
+			right: .6em;
+			font-size: 1rem;
+			color: #666;
 		}
 		
 		#input-area { border-top: 2px solid #333; display: flex; }
@@ -284,9 +346,7 @@
 <body>
 	<div id="app">
 		<div id="chat-app">
-			<div id="header-area">
-				<!-- Header content will go here -->
-			</div>
+			<div id="header-area"></div>
 			<div id="messages">
 				<div id="messages-wrapper"></div>
 			</div>
@@ -321,58 +381,49 @@
 			username: '',
 			color: '180',
 			borderStyle: 'solid',
-			about: '',
 			input: '',
-			showProfile: false,
-			profileUid: null,
-			profileData: null,
 			showUsernamePrompt: false,
 			usernameInput: '',
 			error: '',
 			isLoading: false,
 			lastAnimatedId: null,
 			hasJoinedChat: false,
-			timeoutMsgRef: null
+			timeoutMsgRef: null,
+			soundTheme: 'default',
+			animationsEnabled: true
 		};
 
 		const messages = [];
 		const loadedIds = new Set();
-		const typingSound = new Audio('./sounds/terminal_cursor.wav');
-		const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
-
-		function setCookie(name, value, days = 365) {
-			const expires = new Date();
-			expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-			document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-		}
-
-		function getCookie(name) {
-			const nameEQ = name + "=";
-			const ca = document.cookie.split(';');
-			for (let c of ca) {
-				c = c.trim();
-				if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+		
+		const soundThemes = {
+			default: {
+				typing: './sounds/terminal_cursor.wav',
+				finish: './sounds/R_Terminal_ping.wav',
+				enter: './sounds/R_TerminalLoad.wav'
+			},
+			silent: {
+				typing: null,
+				finish: null,
+				enter: null
 			}
-			return null;
-		}
-
-		function loadPreferences() {
-			const savedUsername = getCookie('username');
-			const savedColor = getCookie('color');
-			const savedBorder = getCookie('borderStyle');
-			const savedAbout = getCookie('about');
-			
-			if (savedUsername) state.usernameInput = savedUsername;
-			if (savedColor) state.color = savedColor;
-			if (savedBorder) state.borderStyle = savedBorder;
-			if (savedAbout) state.about = decodeURIComponent(savedAbout);
-		}
-
-		function savePreferences() {
-			setCookie('username', state.username);
-			setCookie('color', state.color);
-			setCookie('borderStyle', state.borderStyle);
-			setCookie('about', encodeURIComponent(state.about));
+		};
+		
+		let typingSound = new Audio(soundThemes.default.typing);
+		let finishSound = new Audio(soundThemes.default.finish);
+		let enterSound = new Audio(soundThemes.default.enter);
+		
+		function updateSoundTheme(theme) {
+			state.soundTheme = theme;
+			if (soundThemes[theme].typing) {
+				typingSound = new Audio(soundThemes[theme].typing);
+			}
+			if (soundThemes[theme].finish) {
+				finishSound = new Audio(soundThemes[theme].finish);
+			}
+			if (soundThemes[theme].enter) {
+				enterSound = new Audio(soundThemes[theme].enter);
+			}
 		}
 
 		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
@@ -405,37 +456,61 @@
 			}
 
 			const el = document.createElement('div');
+			const isSystem = msg.type === 'system';
+			el.className = isSystem ? 'system-message' : 'message';
 			
-			if (msg.type === 'system') {
-				el.className = 'system-message';
-				const parts = msg.text.split(' ');
-				if (parts.length >= 2) {
-					const username = parts[0];
-					const action = parts.slice(1).join(' ');
-					const userColor = msg.userColor ? `hsl(${msg.userColor},100%,50%)` : 'white';
-					el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}`;
+			if (isSystem) {
+				// Check if this has color transition (oldColor -> newColor)
+				if (msg.oldColor && msg.newColor) {
+					const parts = msg.text.split(' is now ');
+					if (parts.length === 2) {
+						const oldName = parts[0];
+						const newName = parts[1];
+						const oldColorStyle = `hsl(${msg.oldColor},100%,50%)`;
+						const newColorStyle = `hsl(${msg.newColor},100%,50%)`;
+						el.innerHTML = `<span class="highlight" style="color: ${oldColorStyle}">${oldName}</span> is now <span class="highlight" style="color: ${newColorStyle}">${newName}</span><span class="time">${formatTime(msg.timestamp)}</span>`;
+					} else {
+						// Single word messages like "joined", "left", "timed out"
+						const words = msg.text.split(' ');
+						const username = words[0];
+						const action = words.slice(1).join(' ');
+						const userColor = msg.oldColor ? `hsl(${msg.oldColor},100%,50%)` : 'white';
+						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
+					}
 				} else {
-					el.textContent = msg.text;
+					// Regular system message
+					const parts = msg.text.split(' ');
+					if (parts.length >= 2) {
+						const username = parts[0];
+						const action = parts.slice(1).join(' ');
+						const userColor = msg.userColor ? `hsl(${msg.userColor},100%,50%)` : 'white';
+						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
+					} else {
+						el.innerHTML = `${msg.text}<span class="time">${formatTime(msg.timestamp)}</span>`;
+					}
 				}
 			} else {
-				el.className = 'message';
 				const light = `hsl(${msg.color},100%,50%)`;
 				const dark = `hsl(${msg.color},100%,30%)`;
 				el.style.color = light;
 				el.style.borderColor = dark;
 				el.style.borderStyle = msg.borderStyle;
-				el.onclick = () => openProfile(msg.userId);
 				el.innerHTML = `
 					<span class="name" style="color:${dark}"></span>
 					<span class="text"></span>
 					<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
 				`;
 				
-				if (animate && state.user) {
+				if (animate && state.user && state.animationsEnabled) {
 					animateMessage(el, msg.userName, msg.text);
 				} else {
 					el.querySelector('.name').textContent = msg.userName;
 					el.querySelector('.text').textContent = msg.text;
+					// Play finish sound even without animation
+					if (animate && state.user && state.soundTheme !== 'silent') {
+						finishSound.currentTime = 0;
+						finishSound.play().catch(() => {});
+					}
 				}
 			}
 			
@@ -464,7 +539,7 @@
 					typed = true;
 				}
 				
-				if (typed) {
+				if (typed && state.soundTheme !== 'silent' && state.animationsEnabled) {
 					typingSound.currentTime = 0;
 					typingSound.play().catch(() => {});
 				}
@@ -474,8 +549,10 @@
 				if (ni < userName.length || ti < text.length) {
 					setTimeout(type, 80);
 				} else {
-					finishSound.currentTime = 0;
-					finishSound.play().catch(() => {});
+					if (state.soundTheme !== 'silent' && state.animationsEnabled) {
+						finishSound.currentTime = 0;
+						finishSound.play().catch(() => {});
+					}
 				}
 			}
 			type();
@@ -502,23 +579,14 @@
 			document.getElementById('messageInput').value = '';
 		}
 
-		async function sendSystemMessage(text, userColor = null) {
+		async function sendSystemMessage(text, oldColor = null, newColor = null) {
 			await push(ref(db, 'messages'), {
 				text: text,
 				timestamp: Date.now(),
 				type: 'system',
-				userColor: userColor
+				oldColor: oldColor,
+				newColor: newColor
 			});
-		}
-
-		async function openProfile(uid) {
-			const userRef = ref(db, `users/${uid}`);
-			const snap = await get(userRef);
-			const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
-			state.profileUid = uid;
-			state.profileData = { ...data };
-			state.showProfile = true;
-			renderOverlay();
 		}
 
 		async function enterChat() {
@@ -542,8 +610,8 @@
 				return;
 			}
 			
-			if (un.length < 2 || un.length > 20) {
-				state.error = 'Username must be 2-20 characters';
+			if (un.length < 2 || un.length > 10) {
+				state.error = 'Username must be 2-10 characters';
 				renderOverlay();
 				return;
 			}
@@ -559,12 +627,16 @@
 			state.showUsernamePrompt = false;
 			state.error = '';
 			
-			savePreferences();
-			
 			if (!state.hasJoinedChat) {
-				await sendSystemMessage(`${un} joined`, state.color);
+				await sendSystemMessage(`${un} joined`, state.color, state.color);
 				state.hasJoinedChat = true;
 				await setupPresence();
+				
+				// Play enter sound
+				if (state.soundTheme !== 'silent') {
+					enterSound.currentTime = 0;
+					enterSound.play().catch(() => {});
+				}
 			}
 			
 			renderOverlay();
@@ -601,8 +673,7 @@
 					<div class="modal-content">
 						<div class="modal-header">CHOOSE USERNAME</div>
 						${state.error ? `<div class="error">${state.error}</div>` : ''}
-						<input id="unInput" type="text" value="${state.usernameInput}" maxlength="20" placeholder="Username" autocomplete="off">
-						<input id="aboutInput" type="text" maxlength="50" placeholder="Status (optional)" style="margin:0;color:white" value="${state.about}">
+						<input id="unInput" type="text" value="${state.usernameInput}" maxlength="10" placeholder="Username" autocomplete="off">
 						<div class="style-section">
 							<span class="style-label">COLOR</span>
 							<div class="color-grid" id="colorGrid">
@@ -626,7 +697,6 @@
 						confirmUsername();
 					}
 				};
-				document.getElementById('aboutInput').oninput = e => state.about = e.target.value;
 				document.querySelectorAll('.color-option').forEach(el => {
 					el.onclick = () => {
 						state.color = el.dataset.color;
@@ -642,112 +712,102 @@
 				document.getElementById('confirmBtn').onclick = confirmUsername;
 				return;
 			}
-
-			if (state.showProfile) {
-				const div = document.createElement('div');
-				div.id = 'overlay';
-				div.className = 'modal';
-				const userColor = `hsl(${state.profileData?.color || '0'},100%,50%)`;
-				const isOwnProfile = state.profileUid === state.user?.uid;
-				div.innerHTML = `
-					<div class="modal-content" style="border-color: ${userColor}">
-						<div class="modal-header" style="color: ${userColor}">
-							<span>${state.profileData?.username || 'User'}</span>
-							<button class="close-btn" id="closeBtn">CLOSE</button>
-						</div>
-						${isOwnProfile ? `
-							<div style="color:${userColor};margin-bottom:0.5rem">CHANGE USERNAME</div>
-							<input id="newUsernameInput" type="text" maxlength="20" placeholder="New username (leave empty to keep)" style="border-color: ${userColor}">
-						` : ''}
-						<div style="color:${userColor};margin-bottom:0.5rem">STATUS</div>
-						<textarea id="aboutInput" maxlength="200" style="border-color: ${userColor}; min-height: 60px" ${!isOwnProfile ? 'readonly' : ''}>${state.profileData?.about || ''}</textarea>
-						${isOwnProfile ? `
-							<div class="style-section">
-								<span class="style-label">COLOR</span>
-								<div class="color-grid" id="colorGrid">
-									${COLORS.map(h => `<div class="color-option ${state.profileData.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.profileData.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
-								</div>
-								<span class="style-label">BORDER</span>
-								<div class="border-options">
-									${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.profileData.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.profileData.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
-								</div>
-							</div>
-							<button id="saveBtn" style="background: ${userColor}; color: #0b0b0d">SAVE CHANGES</button>
-						` : ''}
-					</div>
-				`;
-				document.body.appendChild(div);
-				div.onclick = e => e.target.id === 'overlay' && (state.showProfile = false, renderOverlay());
-				document.getElementById('closeBtn').onclick = () => { state.showProfile = false; renderOverlay(); };
-				
-				if (isOwnProfile) {
-					document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
-					
-					document.querySelectorAll('.color-option').forEach(el => {
-						el.onclick = () => {
-							state.profileData.color = el.dataset.color;
-							renderOverlay();
-						};
-					});
-					document.querySelectorAll('.border-option').forEach(el => {
-						el.onclick = () => {
-							state.profileData.borderStyle = el.dataset.style;
-							renderOverlay();
-						};
-					});
-					
-					document.getElementById('saveBtn').onclick = async () => {
-						if (!state.user) return;
-						const newUsername = document.getElementById('newUsernameInput').value.trim();
-						const oldUsername = state.username;
-						
-						if (newUsername && newUsername !== oldUsername) {
-							if (newUsername.length < 2 || newUsername.length > 20) {
-								alert('Username must be 2-20 characters');
-								return;
-							}
-							
-							await sendSystemMessage(`${oldUsername} is now ${newUsername}`, state.profileData.color);
-							state.username = newUsername;
-						}
-						
-						const userRef = ref(db, `users/${state.user.uid}`);
-						await set(userRef, {
-							username: state.username,
-							about: state.profileData.about,
-							color: state.profileData.color,
-							borderStyle: state.profileData.borderStyle
-						});
-						
-						state.about = state.profileData.about;
-						state.color = state.profileData.color;
-						state.borderStyle = state.profileData.borderStyle;
-						
-						savePreferences();
-						
-						if (newUsername) {
-							await setupPresence();
-						}
-						
-						state.showProfile = false;
-						renderOverlay();
-					};
-				}
-				return;
-			}
-
-			const existing2 = document.getElementById('controls');
 			if (existing2) existing2.remove();
-			const div = document.createElement('div');
-			div.id = 'controls';
-			div.className = 'floating-controls';
-			const userColor = `hsl(${state.color},100%,50%)`;
-			div.innerHTML = `
-				<span class="username" id="usernameBtn" style="color: ${userColor}; border-color: ${userColor}">${state.username}</span>
-				<button class="logout-btn" id="logoutBtn">LEAVE</button>
-			`;
-			document.body.appendChild(div);
-			document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
+			
+			const header = document.getElementById('header-area');
+			if (header) {
+				const userColor = `hsl(${state.color},100%,50%)`;
+				header.innerHTML = `
+					<input type="text" id="username-input" value="${state.username}" maxlength="10" placeholder="Username" style="border-color: ${userColor}; color: ${userColor}">
+					<select id="color-select" style="border-color: ${userColor};">
+						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">● Color ${h}°</option>`).join('')}
+					</select>
+					<select id="border-select" style="border-color: ${userColor};">
+						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Solid</option>
+						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Dashed</option>
+						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Dotted</option>
+					</select>
+					<button id="update-btn">UPDATE</button>
+					<div class="header-divider"></div>
+					<select id="sound-theme-select" style="border-color: ${userColor};">
+						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound: Default</option>
+						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound: Silent</option>
+					</select>
+					<label id="animations-toggle">
+						<input type="checkbox" id="animations-checkbox" ${state.animationsEnabled?'checked':''}>
+						<span>Animations</span>
+					</label>
+					<button class="logout-btn" id="logoutBtn" style="margin-left: auto;">LEAVE</button>
+				`;
+				
+				document.getElementById('update-btn').onclick = async () => {
+					const newUsername = document.getElementById('username-input').value.trim();
+					const newColor = document.getElementById('color-select').value;
+					const newBorderStyle = document.getElementById('border-select').value;
+					const oldUsername = state.username;
+					const oldColor = state.color;
+					
+					if (!newUsername) {
+						alert('Username cannot be empty');
+						return;
+					}
+					
+					if (newUsername.length < 2 || newUsername.length > 10) {
+						alert('Username must be 2-10 characters');
+						return;
+					}
+					
+					// Check if anything changed
+					const nameChanged = newUsername !== oldUsername;
+					const colorChanged = newColor !== oldColor;
+					
+					if (nameChanged || colorChanged) {
+						// Build message based on what changed
+						let message = `${oldUsername} is now ${newUsername}`;
+						await sendSystemMessage(message, oldColor, newColor);
+						state.username = newUsername;
+					}
+					
+					// Update all settings
+					state.color = newColor;
+					state.borderStyle = newBorderStyle;
+					
+					const userRef = ref(db, `users/${state.user.uid}`);
+					await set(userRef, {
+						username: state.username,
+						about: state.about,
+						color: state.color,
+						borderStyle: state.borderStyle
+					});
+					
+					await setupPresence();
+					
+					// Update UI colors
+					const messageInput = document.getElementById('messageInput');
+					if (messageInput) {
+						messageInput.style.color = `hsl(${state.color},100%,50%)`;
+					}
+					
+					document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
+					const style = document.createElement('style');
+					style.id = 'dynamic-scrollbar';
+					const existingStyle = document.getElementById('dynamic-scrollbar');
+					if (existingStyle) existingStyle.remove();
+					style.textContent = `#messages::-webkit-scrollbar-thumb { background: hsl(${state.color},100%,50%); }`;
+					document.head.appendChild(style);
+					
+					renderOverlay();
+				};
+				
+				document.getElementById('sound-theme-select').onchange = (e) => {
+					updateSoundTheme(e.target.value);
+				};
+				
+				document.getElementById('animations-checkbox').onchange = (e) => {
+					state.animationsEnabled = e.target.checked;
+				};
+			}
+			
 			document.getElementById('logoutBtn').onclick = async () => {
 				try {
 					if (state.timeoutMsgRef) {
@@ -755,7 +815,7 @@
 					}
 					
 					if (state.username) {
-						await sendSystemMessage(`${state.username} left`, state.color);
+						await sendSystemMessage(`${state.username} left`, state.color, state.color);
 					}
 					
 					if (state.user) {
@@ -819,7 +879,8 @@
 						text: `${state.username} timed out`,
 						timestamp: Date.now(),
 						type: 'system',
-						userColor: state.color
+						oldColor: state.color,
+						newColor: state.color
 					});
 					
 					state.timeoutMsgRef = timeoutMsgRef;
@@ -829,8 +890,6 @@
 
 		onAuthStateChanged(auth, async user => {
 			if (user) {
-				loadPreferences();
-				
 				const snap = await get(ref(db, `users/${user.uid}`));
 				if (!snap.exists() || !snap.val()?.username) {
 					state.user = user;
@@ -841,13 +900,18 @@
 					state.username = data.username;
 					state.color = data.color || '180';
 					state.borderStyle = data.borderStyle || 'solid';
-					state.about = data.about || '';
 					state.showUsernamePrompt = false;
 					
 					if (!state.hasJoinedChat) {
-						await sendSystemMessage(`${state.username} joined`, state.color);
+						await sendSystemMessage(`${state.username} joined`, state.color, state.color);
 						state.hasJoinedChat = true;
 						await setupPresence();
+						
+						// Play enter sound
+						if (state.soundTheme !== 'silent') {
+							enterSound.currentTime = 0;
+							enterSound.play().catch(() => {});
+						}
 					}
 				}
 			} else {
@@ -860,7 +924,6 @@
 			renderOverlay();
 		});
 
-		loadPreferences();
 		renderOverlay();
 	</script>
 </body>
