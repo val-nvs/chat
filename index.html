@@ -11,6 +11,7 @@
 		}
 		* { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
 		html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
+		.login-overlay, .modal { backdrop-filter: blur(8px); }
 		
 		body {
 			border: 1px solid hsl(180,100%,50%);
@@ -23,8 +24,7 @@
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background: rgba(11,11,13,0.95);
-			backdrop-filter: blur(8px);
+			background: rgba(11,11,13,0.7);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -36,11 +36,6 @@
 			color: hsl(180,100%,50%); 
 			font-size: 3rem; 
 			margin-bottom: 1rem;
-			animation: pulse 2s ease-in-out infinite;
-		}
-		@keyframes pulse {
-			0%, 100% { opacity: 1; }
-			50% { opacity: 0.7; }
 		}
 		.enter-btn {
 			background: hsl(180,100%,50%);
@@ -49,11 +44,6 @@
 			border: none;
 			font-size: 1.5rem;
 			cursor: pointer;
-			transition: all 0.3s;
-		}
-		.enter-btn:hover {
-			transform: scale(1.05);
-			box-shadow: 0 0 20px hsla(180,100%,50%,0.5);
 		}
 		
 		#chat-app { 
@@ -65,34 +55,44 @@
 		#header-area {
 			border-bottom: 2px solid #333;
 			display: grid;
-			grid-template-columns: auto auto auto auto 1px auto auto auto;
+			grid-template-columns: repeat(4, 1fr);
 			padding: 0.25rem 0.5rem;
 			align-items: center;
 			gap: 0.25rem;
 			overflow: hidden;
 		}
-		#header-area input, #header-area select {
+		#update-btn {
+			grid-column: 4;
+		}
+		.header-divider {
+			display: none;
+		}
+		#sound-theme-select {
+			grid-column: 1;
+		}
+		#animations-select {
+			grid-column: 2;
+		}
+		#logoutBtn {
+			grid-column: 4;
+		}
+		#header-area input, #header-area select, #header-area button {
 			background: #0b0b0d;
 			color: white;
 			border: 2px solid #666;
 			padding: 2px 4px;
-			font-size: 0.85rem;
+			font-size: 1rem;
 			outline: none;
 			overflow: hidden;
 			text-overflow: clip;
 			width: 100%;
 			min-width: 0;
-		}
-		#header-area select {
 			cursor: pointer;
 		}
 		#header-area select option {
 			background: #0b0b0d;
 		}
-		#username-input {
-			min-width: 0;
-		}
-		#color-select, #border-select, #sound-theme-select, #animations-select {
+		#username-input, #color-select, #border-select, #sound-theme-select, #animations-select {
 			min-width: 0;
 		}
 		#update-btn {
@@ -112,6 +112,7 @@
 			background: #333;
 			margin: 0;
 			flex-shrink: 0;
+			display: none;
 		}
 		#animations-toggle {
 			display: flex;
@@ -135,17 +136,15 @@
 			pointer-events: none;
 		}
 		.logout-btn { 
-			padding: 2px 6px;
-			background: rgba(11,11,13,0.9);
-			border: 2px solid hsl(0,100%,50%);
-			backdrop-filter: blur(10px);
+			background: #333;
+			border: none;
 			cursor: pointer;
 			color: hsl(0,100%,50%);
 			font-size: 0.85rem;
-			pointer-events: auto;
 			white-space: nowrap;
-			justify-self: end;
-			min-width: 0;
+		}
+		.logout-btn:hover {
+			opacity: 0.8;
 		}
 		
 		#messages {
@@ -208,16 +207,25 @@
 			position: relative;
 		}
 		.system-message:hover { transform: none; }
+		.message.youtube {
+			max-width: 80%;
+		}
+		.message iframe {
+			width: 100%;
+			aspect-ratio: 16/9;
+			border: none;
+			display: block;
+			margin-top: 0.5rem;
+		}
+		.message .name, .message .time, .system-message .time { 
+			position: absolute; 
+			background: #0b0b0d; 
+		}
+		.message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
+		.message .time, .system-message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
+		.system-message .time { color: #666; }
 		.system-message .highlight {
 			font-weight: bold;
-		}
-		.system-message .time {
-			position: absolute;
-			background: #0b0b0d;
-			bottom: -0.6em;
-			right: .6em;
-			font-size: 1rem;
-			color: #666;
 		}
 		
 		#input-area { border-top: 2px solid #333; display: flex; }
@@ -234,7 +242,7 @@
 		#send-btn {
 			padding: 1rem 1.5rem;
 			font-size: 1.5rem;
-			background: #0b0b0d;
+			background: #333;
 			color: white;
 			border: none;
 			border-left: 2px solid #333;
@@ -248,15 +256,12 @@
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background: rgba(11,11,13,0.5);
-			backdrop-filter: blur(8px);
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			z-index: 2000;
 		}
 		.modal-content {
-			background: #0b0b0d;
 			border: 2px solid white;
 			padding: 2rem;
 			min-width: 300px;
@@ -266,15 +271,12 @@
 			overflow-y: auto;
 		}
 		.modal-header {
-			color: white;
-			font-size: 1.5rem;
-			margin-bottom: 1rem;
 			display: flex;
 			justify-content: space-between;
 		}
 		.modal input, .modal textarea {
 			width: 100%;
-			background: #0b0b0d;
+			background: #222;
 			color: white;
 			border: 2px solid #666;
 			padding: 12px;
@@ -283,8 +285,6 @@
 			margin: 10px 0;
 		}
 		.modal button {
-			background: white;
-			color: #0b0b0d;
 			padding: 12px;
 			border: none;
 			cursor: pointer;
@@ -292,9 +292,9 @@
 			font-size: 16px;
 			margin-top: 10px;
 		}
-		.error { color: hsl(0,100%,50%); font-size: 0.9rem; margin-bottom: 10px; }
+		.error { color: #f00;}
 		
-		.style-section { margin-top: 1.5rem; }
+		.style-section { margin-block: 1.5rem; }
 		.style-label {
 			color: white;
 			font-size: 1rem;
@@ -307,44 +307,25 @@
 			gap: 6px;
 			margin-bottom: 1rem;
 		}
+		.color-option, .border-option {
+			cursor: pointer;
+		}
 		.color-option {
 			aspect-ratio: 1;
-			border: 2px solid transparent;
-			cursor: pointer;
-			transition: all 0.2s;
 			width: 100%;
 			height: 100%;
 		}
-		.color-option.selected {
+		.color-option.selected, .border-option.selected {
 			border-color: white;
-			box-shadow: 0 0 8px rgba(255,255,255,0.5);
+			box-shadow: 0 0 8px rgba(255,255,255,1);
 		}
 		.border-options { display: flex; gap: 8px; }
 		.border-option {
 			flex: 1;
 			padding: 8px;
-			background: #0b0b0d;
-			cursor: pointer;
+			background: transparent;
 			text-align: center;
-			transition: all 0.2s;
 			font-size: 0.85rem;
-		}
-		.border-option.selected {
-			border-color: white;
-			box-shadow: 0 0 8px rgba(255,255,255,0.5);
-		}
-		.loading {
-			display: inline-block;
-			width: 20px;
-			height: 20px;
-			border: 3px solid rgba(255,255,255,0.3);
-			border-top-color: hsl(180,100%,50%);
-			border-radius: 50%;
-			animation: spin 1s linear infinite;
-			margin-left: 10px;
-		}
-		@keyframes spin {
-			to { transform: rotate(360deg); }
 		}
 	</style>
 </head>
@@ -698,10 +679,7 @@
 				div.innerHTML = `
 					<h1>CHAT</h1>
 					${state.error ? `<div class="error">${state.error}</div>` : ''}
-					${state.isLoading ? 
-						'<div class="loading"></div>' : 
-						'<button class="enter-btn" id="enterBtn">ENTER</button>'
-					}
+					${state.isLoading ? 'Loading...' : '<button class="enter-btn" id="enterBtn">ENTER</button>'}
 				`;
 				document.body.appendChild(div);
 				if (!state.isLoading) {
@@ -767,11 +745,11 @@
 						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">Hue ${h}°</option>`).join('')}
 					</select>
 					<select id="border-select" style="border-color: ${userColor};">
-						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line ─</option>
-						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line ╌</option>
-						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line ┄</option>
+						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line Solid</option>
+						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line Dashed</option>
+						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line Dotted</option>
 					</select>
-					<button id="update-btn" style="background: ${userColor}; border-color: ${userColor};">UPDATE</button>
+					<button id="update-btn">UPDATE</button>
 					<div class="header-divider"></div>
 					<select id="sound-theme-select" style="border-color: ${userColor};">
 						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
@@ -782,6 +760,7 @@
 						<option value="true" ${state.animationsEnabled?'selected':''}>FX: On</option>
 						<option value="false" ${!state.animationsEnabled?'selected':''}>FX: Off</option>
 					</select>
+					<span></span>
 					<button class="logout-btn" id="logoutBtn">LEAVE</button>
 				`;
 				
