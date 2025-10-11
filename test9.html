@@ -56,18 +56,11 @@
 			box-shadow: 0 0 20px hsla(180,100%,50%,0.5);
 		}
 		
-		#chat-app { 
+		.chat-app { 
 			display: flex; 
 			flex-direction: column; 
 			height: 100dvh;
 			overflow: hidden;
-		}
-		#header-area {
-			border-bottom: 2px solid #333;
-			display: flex;
-			padding: 1rem;
-			align-items: center;
-			justify-content: space-between;
 		}
 		.floating-controls {
 			position: fixed;
@@ -87,24 +80,25 @@
 		.username { color: hsl(180,100%,50%); border-color: hsl(180,100%,50%); }
 		.logout-btn { color: hsl(0,100%,50%); border-color: hsl(0,100%,50%); }
 		
-		#messages {
+		.messages {
 			flex: 1;
 			padding: 1rem;
+			padding-top: 4rem;
 			overflow-y: scroll;
 			overflow-x: hidden;
 			min-height: 0;
 			-webkit-overflow-scrolling: touch;
 		}
-		#messages::-webkit-scrollbar {
+		.messages::-webkit-scrollbar {
 			width: 1ch;
 		}
-		#messages::-webkit-scrollbar-track {
+		.messages::-webkit-scrollbar-track {
 			background: #0b0b0d;
 		}
-		#messages::-webkit-scrollbar-thumb {
+		.messages::-webkit-scrollbar-thumb {
 			background: hsl(180,100%,50%);
 		}
-		#messages-wrapper {
+		.messages-wrapper {
 			display: flex;
 			flex-direction: column;
 			min-height: min-content;
@@ -142,8 +136,8 @@
 			font-weight: bold;
 		}
 		
-		#input-area { border-top: 2px solid #333; display: flex; }
-		#input-area input {
+		.input-area { border-top: 2px solid #333; display: flex; }
+		.input-area input {
 			flex: 1;
 			padding: 1rem;
 			font-size: 1.5rem;
@@ -152,7 +146,7 @@
 			border: none;
 			outline: none;
 		}
-		#send-btn {
+		.send-btn {
 			padding: 1rem 1.5rem;
 			font-size: 1.5rem;
 			background: #0b0b0d;
@@ -283,16 +277,13 @@
 </head>
 <body>
 	<div id="app">
-		<div id="chat-app">
-			<div id="header-area">
-				<!-- Header content will go here -->
+		<div class="chat-app">
+			<div class="messages" id="messages">
+				<div class="messages-wrapper" id="messagesWrapper"></div>
 			</div>
-			<div id="messages">
-				<div id="messages-wrapper"></div>
-			</div>
-			<div id="input-area">
+			<div class="input-area">
 				<input type="text" id="messageInput" placeholder="Type...">
-				<button id="send-btn">SEND</button>
+				<button class="send-btn" id="sendBtn">SEND</button>
 			</div>
 		</div>
 	</div>
@@ -340,6 +331,7 @@
 		const typingSound = new Audio('./sounds/terminal_cursor.wav');
 		const finishSound = new Audio('./sounds/R_Terminal_ping.wav');
 
+		// Cookie functions
 		function setCookie(name, value, days = 365) {
 			const expires = new Date();
 			expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -356,6 +348,7 @@
 			return null;
 		}
 
+		// Load saved preferences from cookies
 		function loadPreferences() {
 			const savedUsername = getCookie('username');
 			const savedColor = getCookie('color');
@@ -368,6 +361,7 @@
 			if (savedAbout) state.about = decodeURIComponent(savedAbout);
 		}
 
+		// Save preferences to cookies
 		function savePreferences() {
 			setCookie('username', state.username);
 			setCookie('color', state.color);
@@ -375,6 +369,7 @@
 			setCookie('about', encodeURIComponent(state.about));
 		}
 
+		// Setup input handlers once
 		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
 		document.getElementById('messageInput').onkeypress = e => {
 			if (e.key === 'Enter' && !e.shiftKey) {
@@ -382,8 +377,9 @@
 				sendMessage();
 			}
 		};
-		document.getElementById('send-btn').onclick = sendMessage;
+		document.getElementById('sendBtn').onclick = sendMessage;
 
+		// Listen to messages
 		onChildAdded(ref(db, 'messages'), snapshot => {
 			const id = snapshot.key;
 			if (loadedIds.has(id)) return;
@@ -397,7 +393,7 @@
 		});
 
 		function addMessageToDOM(msg, animate) {
-			const container = document.getElementById('messages-wrapper');
+			const container = document.getElementById('messagesWrapper');
 			if (!container) return;
 
 			while (container.children.length >= 30) {
@@ -406,8 +402,10 @@
 
 			const el = document.createElement('div');
 			
+			// Check if it's a system message
 			if (msg.type === 'system') {
 				el.className = 'system-message';
+				// Parse the message to highlight the username
 				const parts = msg.text.split(' ');
 				if (parts.length >= 2) {
 					const username = parts[0];
@@ -450,7 +448,7 @@
 		function animateMessage(el, userName, text) {
 			const nameEl = el.querySelector('.name');
 			const textEl = el.querySelector('.text');
-			if (!nameEl || !textEl) return;
+			if (!nameEl || !textEl) return; // System message
 			
 			let ni = 0, ti = 0;
 			function type() {
@@ -516,7 +514,7 @@
 			const snap = await get(userRef);
 			const data = snap.val() || { username: 'User', about: '', color: '0', borderStyle: 'solid' };
 			state.profileUid = uid;
-			state.profileData = { ...data };
+			state.profileData = { ...data }; // Create a copy to edit
 			state.showProfile = true;
 			renderOverlay();
 		}
@@ -548,6 +546,7 @@
 				return;
 			}
 			
+			// Save to Firebase
 			await set(ref(db, `users/${state.user.uid}`), {
 				username: un,
 				about: state.about,
@@ -559,11 +558,14 @@
 			state.showUsernamePrompt = false;
 			state.error = '';
 			
+			// Save preferences to cookies
 			savePreferences();
 			
+			// Send join message
 			if (!state.hasJoinedChat) {
 				await sendSystemMessage(`${un} joined`, state.color);
 				state.hasJoinedChat = true;
+				// Setup presence after setting username
 				await setupPresence();
 			}
 			
@@ -574,6 +576,7 @@
 			const existing = document.getElementById('overlay');
 			if (existing) existing.remove();
 
+			// Show loading/enter screen for non-authenticated users
 			if (!state.user) {
 				const div = document.createElement('div');
 				div.id = 'overlay';
@@ -593,6 +596,7 @@
 				return;
 			}
 
+			// Username prompt for new users
 			if (state.showUsernamePrompt) {
 				const div = document.createElement('div');
 				div.id = 'overlay';
@@ -643,6 +647,7 @@
 				return;
 			}
 
+			// Profile modal
 			if (state.showProfile) {
 				const div = document.createElement('div');
 				div.id = 'overlay';
@@ -683,6 +688,7 @@
 				if (isOwnProfile) {
 					document.getElementById('aboutInput').oninput = e => state.profileData.about = e.target.value;
 					
+					// Add color and border style handlers
 					document.querySelectorAll('.color-option').forEach(el => {
 						el.onclick = () => {
 							state.profileData.color = el.dataset.color;
@@ -701,16 +707,19 @@
 						const newUsername = document.getElementById('newUsernameInput').value.trim();
 						const oldUsername = state.username;
 						
+						// Check if username is changing
 						if (newUsername && newUsername !== oldUsername) {
 							if (newUsername.length < 2 || newUsername.length > 20) {
 								alert('Username must be 2-20 characters');
 								return;
 							}
 							
+							// Send username change message
 							await sendSystemMessage(`${oldUsername} is now ${newUsername}`, state.profileData.color);
 							state.username = newUsername;
 						}
 						
+						// Update all user data
 						const userRef = ref(db, `users/${state.user.uid}`);
 						await set(userRef, {
 							username: state.username,
@@ -719,12 +728,15 @@
 							borderStyle: state.profileData.borderStyle
 						});
 						
+						// Update local state
 						state.about = state.profileData.about;
 						state.color = state.profileData.color;
 						state.borderStyle = state.profileData.borderStyle;
 						
+						// Save to cookies
 						savePreferences();
 						
+						// Update presence with new info
 						if (newUsername) {
 							await setupPresence();
 						}
@@ -736,6 +748,7 @@
 				return;
 			}
 
+			// Logged in - show controls
 			const existing2 = document.getElementById('controls');
 			if (existing2) existing2.remove();
 			const div = document.createElement('div');
@@ -750,29 +763,35 @@
 			document.getElementById('usernameBtn').onclick = () => openProfile(state.user.uid);
 			document.getElementById('logoutBtn').onclick = async () => {
 				try {
+					// Cancel the timeout message since this is a clean logout
 					if (state.timeoutMsgRef) {
 						await onDisconnect(state.timeoutMsgRef).cancel();
 					}
 					
+					// Send leave message before signing out
 					if (state.username) {
 						await sendSystemMessage(`${state.username} left`, state.color);
 					}
 					
+					// Remove presence
 					if (state.user) {
 						const presenceRef = ref(db, `presence/${state.user.uid}`);
 						await onDisconnect(presenceRef).cancel();
 						await set(presenceRef, null);
 					}
 					
+					// Clear user data and sign out
 					state.user = null;
 					state.username = '';
 					state.hasJoinedChat = false;
 					state.timeoutMsgRef = null;
 					
 					await signOut(auth);
+					// Immediately update UI after signing out
 					renderOverlay();
 				} catch (err) {
 					console.error('Logout error:', err);
+					// Force logout even if there's an error
 					state.user = null;
 					state.username = '';
 					state.hasJoinedChat = false;
@@ -781,28 +800,33 @@
 				}
 			};
 			
+			// Update input color
 			const messageInput = document.getElementById('messageInput');
 			if (messageInput) {
 				messageInput.style.color = userColor;
 			}
 			
+			// Update scrollbar and border color
 			document.body.style.borderColor = userColor;
 			const style = document.createElement('style');
 			style.id = 'dynamic-scrollbar';
 			const existingStyle = document.getElementById('dynamic-scrollbar');
 			if (existingStyle) existingStyle.remove();
-			style.textContent = `#messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
+			style.textContent = `.messages::-webkit-scrollbar-thumb { background: ${userColor}; }`;
 			document.head.appendChild(style);
 		}
 
+		// Setup presence system for timeout detection
 		async function setupPresence() {
 			if (!state.user || !state.username) return;
 			
 			const presenceRef = ref(db, `presence/${state.user.uid}`);
 			const connectedRef = ref(db, '.info/connected');
 			
+			// Listen to connection state
 			onValue(connectedRef, async (snapshot) => {
 				if (snapshot.val() === true && state.user && state.username) {
+					// User is online
 					await set(presenceRef, {
 						username: state.username,
 						color: state.color,
@@ -810,8 +834,11 @@
 						timestamp: Date.now()
 					});
 					
+					// Setup disconnect hook - this runs on the server when connection is lost
 					await onDisconnect(presenceRef).remove();
 					
+					// Also queue a timeout message to be sent on disconnect
+					// Create a unique key for the timeout message
 					const timeoutMsgKey = `timeout_${state.user.uid}_${Date.now()}`;
 					const timeoutMsgRef = ref(db, `messages/${timeoutMsgKey}`);
 					
@@ -822,6 +849,7 @@
 						userColor: state.color
 					});
 					
+					// Store the timeout message reference so we can cancel it on clean logout
 					state.timeoutMsgRef = timeoutMsgRef;
 				}
 			});
@@ -829,13 +857,16 @@
 
 		onAuthStateChanged(auth, async user => {
 			if (user) {
+				// Load preferences from cookies first
 				loadPreferences();
 				
 				const snap = await get(ref(db, `users/${user.uid}`));
 				if (!snap.exists() || !snap.val()?.username) {
+					// New user - show username prompt with cookie values pre-filled
 					state.user = user;
 					state.showUsernamePrompt = true;
 				} else {
+					// Returning user (same session)
 					state.user = user;
 					const data = snap.val();
 					state.username = data.username;
@@ -844,9 +875,11 @@
 					state.about = data.about || '';
 					state.showUsernamePrompt = false;
 					
+					// Send join message if not already sent
 					if (!state.hasJoinedChat) {
 						await sendSystemMessage(`${state.username} joined`, state.color);
 						state.hasJoinedChat = true;
+						// Setup presence after joining
 						await setupPresence();
 					}
 				}
@@ -860,6 +893,7 @@
 			renderOverlay();
 		});
 
+		// Load preferences on startup
 		loadPreferences();
 		renderOverlay();
 	</script>
