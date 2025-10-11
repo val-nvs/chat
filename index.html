@@ -64,20 +64,24 @@
 		}
 		#header-area {
 			border-bottom: 2px solid #333;
-			display: flex;
+			display: grid;
+			grid-template-columns: auto auto auto auto 1px auto auto auto;
 			padding: 0.25rem 0.5rem;
 			align-items: center;
 			gap: 0.25rem;
-			flex-wrap: nowrap;
-			overflow-x: auto;
+			overflow: hidden;
 		}
 		#header-area input, #header-area select {
 			background: #0b0b0d;
 			color: white;
 			border: 2px solid #666;
-			padding: 2px 6px;
+			padding: 2px 4px;
 			font-size: 0.85rem;
 			outline: none;
+			overflow: hidden;
+			text-overflow: clip;
+			width: 100%;
+			min-width: 0;
 		}
 		#header-area select {
 			cursor: pointer;
@@ -86,13 +90,10 @@
 			background: #0b0b0d;
 		}
 		#username-input {
-			flex: 0 0 auto;
-			width: 8ch;
-			min-width: 8ch;
-			max-width: 8ch;
+			min-width: 0;
 		}
 		#color-select, #border-select, #sound-theme-select, #animations-select {
-			min-width: 60px;
+			min-width: 0;
 		}
 		#update-btn {
 			color: #0b0b0d;
@@ -134,7 +135,7 @@
 			pointer-events: none;
 		}
 		.logout-btn { 
-			padding: 2px 8px;
+			padding: 2px 6px;
 			background: rgba(11,11,13,0.9);
 			border: 2px solid hsl(0,100%,50%);
 			backdrop-filter: blur(10px);
@@ -143,6 +144,8 @@
 			font-size: 0.85rem;
 			pointer-events: auto;
 			white-space: nowrap;
+			justify-self: end;
+			min-width: 0;
 		}
 		
 		#messages {
@@ -220,8 +223,8 @@
 		#input-area { border-top: 2px solid #333; display: flex; }
 		#input-area input {
 			flex: 1;
-			padding: 0.5rem;
-			font-size: 1rem;
+			padding: 1rem;
+			font-size: 1.5rem;
 			background: #0b0b0d;
 			color: hsl(var(--user-color, 180),100%,50%);
 			border: none;
@@ -229,8 +232,8 @@
 			min-width: 0;
 		}
 		#send-btn {
-			padding: 0.5rem 1rem;
-			font-size: 1rem;
+			padding: 1rem 1.5rem;
+			font-size: 1.5rem;
 			background: #0b0b0d;
 			color: white;
 			border: none;
@@ -764,22 +767,22 @@
 						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">Hue ${h}°</option>`).join('')}
 					</select>
 					<select id="border-select" style="border-color: ${userColor};">
-						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>─</option>
-						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>╌</option>
-						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>┄</option>
+						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line ─</option>
+						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line ╌</option>
+						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line ┄</option>
 					</select>
 					<button id="update-btn" style="background: ${userColor}; border-color: ${userColor};">UPDATE</button>
 					<div class="header-divider"></div>
 					<select id="sound-theme-select" style="border-color: ${userColor};">
-						<option value="default" ${state.soundTheme==='default'?'selected':''}>Default</option>
-						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>MSN</option>
-						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Silent</option>
+						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
+						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>Sound MSN</option>
+						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound Silent</option>
 					</select>
 					<select id="animations-select" style="border-color: ${userColor};">
 						<option value="true" ${state.animationsEnabled?'selected':''}>FX: On</option>
 						<option value="false" ${!state.animationsEnabled?'selected':''}>FX: Off</option>
 					</select>
-					<button class="logout-btn" id="logoutBtn" style="margin-left: auto;">LEAVE</button>
+					<button class="logout-btn" id="logoutBtn">LEAVE</button>
 				`;
 				
 				// Live preview: update colors when dropdowns change
