@@ -27,6 +27,11 @@
 		.enter-btn { background: var(--accent-cyan); color: var(--bg-dark); padding: 16px 48px; border: none; font-size: var(--font-lg); cursor: pointer; }
 		#chat-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 		#header-area { border-bottom: var(--border-width) solid var(--border-gray); display: grid; grid-template-columns: repeat(4, 1fr); padding: 0.25rem var(--spacing-half); align-items: center; gap: 0.25rem; overflow: hidden; }
+		#radio-bar { border-bottom: var(--border-width) solid var(--border-gray); display: flex; align-items: center; padding: var(--spacing-half); background: var(--bg-dark); overflow: hidden; }
+		#radio-display { color: var(--accent-cyan); font-size: var(--font-md); white-space: nowrap; animation: marquee 15s linear infinite; }
+		@keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+		#radio-mute-btn { background: var(--border-gray); color: var(--white); border: none; padding: 2px 8px; font-size: var(--font-md); cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; margin-left: auto; flex-shrink: 0; }
+		#radio-mute-btn:hover { opacity: 0.8; }
 		#header-area input { background: var(--bg-dark); color: var(--white); border: var(--border-width) solid var(--border-light); padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
 		#header-area select { background: var(--border-gray); color: var(--accent-cyan); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
 		#header-area button { background: var(--border-gray); color: var(--white); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; width: 100%; cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; }
@@ -74,6 +79,7 @@
 	<div id="app">
 		<div id="chat-app">
 			<div id="header-area"></div>
+			<div id="radio-bar"></div>
 			<div id="messages">
 				<div id="messages-wrapper"></div>
 			</div>
@@ -102,6 +108,43 @@
 		const auth = getAuth(app);
 		const db = getDatabase(app);
 		const COLORS = [180, 210, 240, 270, 300, 330, 0, 30, 60, 90, 120, 150];
+		const COLOR_NAMES = {
+			180: 'Cyan',
+			210: 'Sky',
+			240: 'Blue',
+			270: 'Purple',
+			300: 'Magenta',
+			330: 'Pink',
+			0: 'Red',
+			30: 'Orange',
+			60: 'Yellow',
+			90: 'Lime',
+			120: 'Green',
+			150: 'Teal'
+		};
+		const RADIO_TRACKS = [
+			'Men I Trust - Norton Commander.mp3',
+			'Men I Trust - Oncle Jazz.mp3',
+			'Men I Trust - Show Me How.mp3',
+			'Salyu - Ai no Jikken.mp3',
+			'Salyu - Arabesque.mp3',
+			'Salyu - Glide.mp3',
+			'Salyu - Houwa.mp3',
+			'Salyu - Kaifukusuru Kizu.mp3',
+			'Salyu - Tobenai Tsubasa.mp3',
+			'Yui Makino - Arabesque N 1.mp3',
+			'Yui Makino - Clair de Lune (from Suite Bergamasque).mp3',
+			'Yui Makino - La fille aux cheveux de lin.mp3',
+			'Yui Makino - Prelude (from Suite Bergamasque).mp3',
+			'Jake Chudnow - Dream.mp3',
+			'C418 - Life changing moments seem minor in pictures.mp3',
+			'C418 - Lack of creativity is dangerous in Berlin.mp3',
+			'C418 - In Berlin people act differently.mp3',
+			'C418 - I will perhaps never meet you in person.mp3',
+			'C418 - I lack an emotion.mp3',
+			'C418 - Droopy likes your face.mp3',
+			'C418 - Droopy likes ricochet.mp3'
+		];
 
 		let state = {
 			user: null,
@@ -117,52 +160,147 @@
 			hasJoinedChat: false,
 			timeoutMsgRef: null,
 			soundTheme: 'default',
-			animationsEnabled: true
+			animationsEnabled: true,
+			radioMuted: false
 		};
 
 		const messages = [];
 		const loadedIds = new Set();
 		
-		const soundThemes = {
-			default: {
-				typing: './sounds/default/type.wav',
-				finish: './sounds/default/message.wav',
-				enter: './sounds/default/load.wav',
-				userJoined: './sounds/default/join.wav'
-			},
-			msn: {
-				typing: './sounds/msn/type.wav',
-				finish: './sounds/msn/message.wav',
-				enter: './sounds/msn/load.wav',
-				userJoined: './sounds/msn/join.wav'
-			},
-			silent: {
-				typing: null,
-				finish: null,
-				enter: null,
-				userJoined: null
-			}
-		};
+		let radioAudio = new Audio();
+		let radioStartTime = 0;
+		let currentTrackIndex = 0;
+		let radioPlaying = false;
 		
-		let typingSound = new Audio(soundThemes.default.typing);
-		let finishSound = new Audio(soundThemes.default.finish);
-		let enterSound = new Audio(soundThemes.default.enter);
-		let userJoinedSound = new Audio(soundThemes.default.userJoined);
+		function getRadioPath(filename) {
+			return `./radio/${filename}`;
+		}
+		
+		function playRadio() {
+			if (!state.user) return;
+			
+			const radioRef = ref(db, 'radio');
+			onValue(radioRef, (snapshot) => {
+				const data = snapshot.val();
+				if (data) {
+					const { trackIndex, startTime, playing } = data;
+					const wasPlaying = radioPlaying;
+					radioPlaying = playing !== false;
+					
+					if (!radioPlaying) {
+						radioAudio.pause();
+						updateRadioDisplay();
+						return;
+					}
+					
+					const elapsed = (Date.now() - startTime) / 1000;
+					
+					if (trackIndex !== currentTrackIndex || (!wasPlaying && radioPlaying)) {
+						currentTrackIndex = trackIndex;
+						radioAudio.src = getRadioPath(RADIO_TRACKS[trackIndex]);
+						radioAudio.currentTime = Math.max(0, elapsed);
+						updateRadioDisplay();
+						if (!state.radioMuted && radioPlaying) {
+							radioAudio.play().catch(e => console.log('Play failed:', e));
+						}
+					}
+				}
+			});
+			
+			radioAudio.addEventListener('ended', async () => {
+				if (state.user && radioPlaying) {
+					const nextIndex = (currentTrackIndex + 1) % RADIO_TRACKS.length;
+					await set(ref(db, 'radio'), {
+						trackIndex: nextIndex,
+						startTime: Date.now(),
+						playing: true
+					});
+				}
+			});
+		}
+		
+		function updateRadioDisplay() {
+			const display = document.getElementById('radio-display');
+			if (display) {
+				if (!radioPlaying) {
+					display.textContent = `Radio stopped`;
+				} else {
+					const filename = RADIO_TRACKS[currentTrackIndex].replace('.mp3', '');
+					display.textContent = `♪ ${filename} ♪`;
+				}
+			}
+		}
+		
+		async function radioSkip() {
+			if (!state.user) return;
+			const nextIndex = Math.floor(Math.random() * RADIO_TRACKS.length);
+			await set(ref(db, 'radio'), {
+				trackIndex: nextIndex,
+				startTime: Date.now(),
+				playing: true
+			});
+		}
+		
+		async function radioStop() {
+			if (!state.user) return;
+			await set(ref(db, 'radio'), {
+				trackIndex: currentTrackIndex,
+				startTime: Date.now(),
+				playing: false
+			});
+		}
+		
+		async function radioStart() {
+			if (!state.user) return;
+			
+			// Set playing state in Firebase
+			await set(ref(db, 'radio'), {
+				trackIndex: currentTrackIndex,
+				startTime: Date.now(),
+				playing: true
+			});
+		}
+		
+		function toggleRadioMute() {
+			state.radioMuted = !state.radioMuted;
+			if (state.radioMuted) {
+				radioAudio.pause();
+			} else if (radioPlaying && radioAudio.src) {
+				radioAudio.play().catch(e => console.log('Play failed:', e));
+			}
+			renderRadioBar();
+		}
+		
+		function renderRadioBar() {
+			const radioBar = document.getElementById('radio-bar');
+			if (radioBar && state.user) {
+				const filename = RADIO_TRACKS[currentTrackIndex].replace('.mp3', '');
+				const displayText = radioPlaying ? `♪ ${filename} ♪` : 'Radio stopped';
+				radioBar.innerHTML = `
+					<span id="radio-display">${displayText}</span>
+					<button id="radio-mute-btn">${state.radioMuted ? 'UNMUTE' : 'MUTE'}</button>
+				`;
+				document.getElementById('radio-mute-btn').onclick = toggleRadioMute;
+			}
+		}
+		
+		function getSoundPath(theme, type) {
+			if (theme === 'silent') return null;
+			return `./sounds/${theme}/${type}.wav`;
+		}
+		
+		let typingSound = new Audio(getSoundPath('default', 'type'));
+		let finishSound = new Audio(getSoundPath('default', 'message'));
+		let enterSound = new Audio(getSoundPath('default', 'load'));
+		let userJoinedSound = new Audio(getSoundPath('default', 'join'));
 		
 		function updateSoundTheme(theme) {
 			state.soundTheme = theme;
-			const sounds = soundThemes[theme];
-			if (sounds.typing) {
-				typingSound = new Audio(sounds.typing);
-			}
-			if (sounds.finish) {
-				finishSound = new Audio(sounds.finish);
-			}
-			if (sounds.enter) {
-				enterSound = new Audio(sounds.enter);
-			}
-			if (sounds.userJoined) {
-				userJoinedSound = new Audio(sounds.userJoined);
+			if (theme !== 'silent') {
+				typingSound = new Audio(getSoundPath(theme, 'type'));
+				finishSound = new Audio(getSoundPath(theme, 'message'));
+				enterSound = new Audio(getSoundPath(theme, 'load'));
+				userJoinedSound = new Audio(getSoundPath(theme, 'join'));
 			}
 		}
 
@@ -175,7 +313,7 @@
 		};
 		document.getElementById('send-btn').onclick = sendMessage;
 
-		onChildAdded(ref(db, 'messages'), snapshot => {
+		onChildAdded(ref(db, 'messages'), async snapshot => {
 			const id = snapshot.key;
 			if (loadedIds.has(id)) return;
 			loadedIds.add(id);
@@ -183,6 +321,15 @@
 			const msg = { id, ...snapshot.val() };
 			messages.push(msg);
 			if (messages.length > 30) messages.shift();
+
+			// Check for radio commands
+			if (msg.text === '/play') {
+				await radioStart();
+			} else if (msg.text === '/skip') {
+				await radioSkip();
+			} else if (msg.text === '/stop') {
+				await radioStop();
+			}
 
 			addMessageToDOM(msg, true);
 		});
@@ -319,6 +466,7 @@
 			if (!state.user || !state.input.trim()) return;
 			
 			const text = state.input.trim();
+			
 			let messageData = {
 				userId: state.user.uid,
 				userName: state.username,
@@ -337,8 +485,7 @@
 				messageData.text = `youtube.com/watch?v=${videoId}`;
 			}
 			
-			const msgRef = await push(ref(db, 'messages'), messageData);
-			state.lastAnimatedId = msgRef.key;
+			await push(ref(db, 'messages'), messageData);
 			state.input = '';
 			document.getElementById('messageInput').value = '';
 		}
@@ -358,9 +505,10 @@
 			renderOverlay();
 			try {
 				await signInAnonymously(auth);
+				console.log('Auth successful');
 			} catch (err) {
 				console.error('Auth error:', err);
-				state.error = 'Failed to enter chat';
+				state.error = 'Failed to enter chat: ' + err.message;
 				state.isLoading = false;
 				renderOverlay();
 			}
@@ -483,7 +631,7 @@
 				header.innerHTML = `
 					<input type="text" id="username-input" value="${state.username}" maxlength="10" placeholder="Username" style="border-color: ${userColor}; color: ${userColor}">
 					<select id="color-select" style="color: ${userColor};">
-						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">Hue ${h}°</option>`).join('')}
+						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">${COLOR_NAMES[h]} ${h}°</option>`).join('')}
 					</select>
 					<select id="border-select" style="color: ${userColor};">
 						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line Solid</option>
@@ -495,6 +643,8 @@
 					<select id="sound-theme-select" style="color: ${userColor};">
 						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
 						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>Sound MSN</option>
+						<option value="original" ${state.soundTheme==='original'?'selected':''}>Sound Original</option>
+						<option value="cool" ${state.soundTheme==='cool'?'selected':''}>Sound Cool</option>
 						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound Silent</option>
 					</select>
 					<select id="animations-select" style="color: ${userColor};">
@@ -637,6 +787,8 @@
 				sendBtn.style.color = `hsl(${state.color},100%,50%)`;
 			}
 			
+			renderRadioBar();
+			
 			document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
 			const style = document.createElement('style');
 			style.id = 'dynamic-scrollbar';
@@ -697,6 +849,18 @@
 						await sendSystemMessage(`${state.username} joined`, state.color, state.color);
 						state.hasJoinedChat = true;
 						await setupPresence();
+						
+						const radioRef = ref(db, 'radio');
+						const radioSnap = await get(radioRef);
+						if (!radioSnap.exists()) {
+							await set(radioRef, {
+								trackIndex: 0,
+								startTime: Date.now()
+							});
+						}
+						
+						playRadio();
+						renderRadioBar();
 						
 						if (state.soundTheme !== 'silent') {
 							enterSound.currentTime = 0;
