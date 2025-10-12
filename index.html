@@ -451,7 +451,9 @@
 				`;
 				document.body.appendChild(div);
 				const input = document.getElementById('unInput');
-				input.focus();
+				if (!state.usernameInput) {
+					input.focus();
+				}
 				input.oninput = e => state.usernameInput = e.target.value;
 				input.onkeypress = e => {
 					if (e.key === 'Enter') {
@@ -461,14 +463,12 @@
 				};
 				document.querySelectorAll('.color-option').forEach(el => {
 					el.onclick = () => {
-						document.getElementById('unInput').blur();
 						state.color = el.dataset.color;
 						renderOverlay();
 					};
 				});
 				document.querySelectorAll('.border-option').forEach(el => {
 					el.onclick = () => {
-						document.getElementById('unInput').blur();
 						state.borderStyle = el.dataset.style;
 						renderOverlay();
 					};
