@@ -207,22 +207,10 @@
 			position: relative;
 		}
 		.system-message:hover { transform: none; }
-		.message.youtube {
-			max-width: 80%;
-		}
-		.message iframe {
-			width: 100%;
-			aspect-ratio: 16/9;
-			border: none;
-			display: block;
-			margin-top: 0.5rem;
-		}
 		.message .name, .message .time, .system-message .time { 
 			position: absolute; 
 			background: #0b0b0d; 
 		}
-		.message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
-		.message .time, .system-message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
 		.system-message .time { color: #666; }
 		.system-message .highlight {
 			font-weight: bold;
@@ -474,7 +462,6 @@
 						const userColor = msg.oldColor ? `hsl(${msg.oldColor},100%,50%)` : 'white';
 						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
 						
-						// Play sound if user joined
 						if (action === 'joined' && animate && state.soundTheme !== 'silent') {
 							userJoinedSound.currentTime = 0;
 							userJoinedSound.play().catch(() => {});
@@ -589,7 +576,6 @@
 				type: 'user'
 			};
 			
-			// Check if message is a YouTube link
 			const youtubeRegex = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 			const match = text.match(youtubeRegex);
 			if (match) {
@@ -764,12 +750,10 @@
 					<button class="logout-btn" id="logoutBtn">LEAVE</button>
 				`;
 				
-				// Live preview: update colors when dropdowns change
 				document.getElementById('color-select').onchange = (e) => {
 					const newColor = e.target.value;
 					const previewColor = `hsl(${newColor},100%,50%)`;
 					
-					// Update all elements except UPDATE button and message input text
 					document.body.style.borderColor = previewColor;
 					document.getElementById('username-input').style.borderColor = previewColor;
 					document.getElementById('username-input').style.color = previewColor;
@@ -778,7 +762,6 @@
 					document.getElementById('sound-theme-select').style.borderColor = previewColor;
 					document.getElementById('animations-select').style.borderColor = previewColor;
 					
-					// Update scrollbar
 					let style = document.getElementById('dynamic-scrollbar-preview');
 					if (!style) {
 						style = document.createElement('style');
