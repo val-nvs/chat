@@ -5,69 +5,316 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>chat</title>
 	<style>
-		:root {
-			--bg-dark: #0b0b0d;
-			--border-gray: #333;
-			--border-light: #666;
-			--accent-cyan: hsl(180,100%,50%);
-			--accent-red: hsl(0,100%,50%);
-			--white: white;
-			--font-lg: 1.5rem;
-			--font-md: 1rem;
-			--spacing: 1rem;
-			--spacing-half: 0.5rem;
-			--border-width: 2px;
+		@font-face {
+			font-family: 'PerfectDOS';
+			src: url('./PerfectDosVga.ttf') format('truetype');
 		}
-		@font-face { font-family: 'PerfectDOS'; src: url('./PerfectDosVga.ttf') format('truetype'); }
 		* { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
-		html, body { height: 100%; overflow: hidden; background: var(--bg-dark); color: var(--white); }
-		body { border: 1px solid var(--accent-cyan); }
-		.login-overlay { position: fixed; inset: 0; background: rgba(11,11,13,0.85); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; z-index: 100; }
-		.login-overlay h1 { color: var(--accent-cyan); font-size: 3rem; margin-bottom: var(--spacing); }
-		.enter-btn { background: var(--accent-cyan); color: var(--bg-dark); padding: 16px 48px; border: none; font-size: var(--font-lg); cursor: pointer; }
-		#chat-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
-		#header-area { border-bottom: var(--border-width) solid var(--border-gray); display: grid; grid-template-columns: repeat(4, 1fr); padding: 0.25rem var(--spacing-half); align-items: center; gap: 0.25rem; overflow: hidden; }
-		#header-area input { background: var(--bg-dark); color: var(--white); border: var(--border-width) solid var(--border-light); padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
-		#header-area select { background: var(--border-gray); color: var(--accent-cyan); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
-		#header-area button { background: var(--border-gray); color: var(--white); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; width: 100%; cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; }
-		#header-area select option { background: var(--bg-dark); }
-		#sound-theme-select { grid-column: 1; }
-		#animations-select { grid-column: 2; }
-		#update-btn, #logoutBtn { grid-column: 4; }
-		#update-btn:hover, #logoutBtn:hover { opacity: 0.8; }
-		#header-area #logoutBtn { color: var(--accent-red); }
-		#messages { flex: 1; padding: var(--spacing); overflow-y: scroll; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; }
-		#messages::-webkit-scrollbar { width: 1ch; }
-		#messages::-webkit-scrollbar-track { background: var(--bg-dark); }
-		#messages::-webkit-scrollbar-thumb { background: var(--accent-cyan); }
-		#messages-wrapper { display: flex; flex-direction: column; min-height: min-content; }
-		.message { position: relative; font-size: var(--font-lg); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; align-self: flex-end; background: var(--bg-dark); border: var(--border-width) solid; transition: transform 0.1s; }
-		.message.youtube { max-width: 80%; }
-		.message iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; margin-top: var(--spacing-half); }
-		.message .name, .message .time, .system-message .time { position: absolute; background: var(--bg-dark); }
-		.message .name { top: -0.6em; left: .6em; font-size: var(--font-lg); }
-		.message .time, .system-message .time { bottom: -0.6em; right: .6em; font-size: var(--font-lg); transform: scaleY(0.6); }
-		.system-message { align-self: flex-start; font-size: var(--font-lg); color: var(--white); background: transparent; border: 1px dashed var(--border-light); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; position: relative; }
+		html, body { height: 100%; overflow: hidden; background: #0b0b0d; color: white; }
+		.login-overlay, .modal { backdrop-filter: blur(8px); }
+		
+		body {
+			border: 1px solid hsl(180,100%,50%);
+			box-sizing: border-box;
+		}
+		
+		.login-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(11,11,13,0.7);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+			gap: 20px;
+			z-index: 100;
+		}
+		.login-overlay h1 { 
+			color: hsl(180,100%,50%); 
+			font-size: 3rem; 
+			margin-bottom: 1rem;
+		}
+		.enter-btn {
+			background: hsl(180,100%,50%);
+			color: #0b0b0d;
+			padding: 16px 48px;
+			border: none;
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+		
+		#chat-app { 
+			display: flex; 
+			flex-direction: column; 
+			height: 100dvh;
+			overflow: hidden;
+		}
+		#header-area {
+			border-bottom: 2px solid #333;
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			padding: 0.25rem 0.5rem;
+			align-items: center;
+			gap: 0.25rem;
+			overflow: hidden;
+		}
+		#update-btn {
+			grid-column: 4;
+		}
+		.header-divider {
+			display: none;
+		}
+		#sound-theme-select {
+			grid-column: 1;
+		}
+		#animations-select {
+			grid-column: 2;
+		}
+		#logoutBtn {
+			grid-column: 4;
+		}
+		#header-area input, #header-area select, #header-area button {
+			background: #0b0b0d;
+			color: white;
+			border: 2px solid #666;
+			padding: 2px 4px;
+			font-size: 1rem;
+			outline: none;
+			overflow: hidden;
+			text-overflow: clip;
+			width: 100%;
+			min-width: 0;
+			cursor: pointer;
+		}
+		#header-area select option {
+			background: #0b0b0d;
+		}
+		#username-input, #color-select, #border-select, #sound-theme-select, #animations-select {
+			min-width: 0;
+		}
+		#update-btn {
+			color: #0b0b0d;
+			padding: 2px 8px;
+			border: 2px solid;
+			cursor: pointer;
+			font-size: 0.85rem;
+			white-space: nowrap;
+		}
+		#update-btn:hover {
+			opacity: 0.8;
+		}
+		.header-divider {
+			width: 1px;
+			height: 16px;
+			background: #333;
+			margin: 0;
+			flex-shrink: 0;
+			display: none;
+		}
+		#animations-toggle {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			cursor: pointer;
+			padding: 4px 8px;
+			border: 2px solid #666;
+			background: #0b0b0d;
+		}
+		#animations-toggle input[type="checkbox"] {
+			cursor: pointer;
+		}
+		.floating-controls {
+			position: fixed;
+			top: 1rem;
+			left: 1rem;
+			display: none;
+			gap: 10px;
+			z-index: 1000;
+			pointer-events: none;
+		}
+		.logout-btn { 
+			background: #333;
+			border: none;
+			cursor: pointer;
+			color: hsl(0,100%,50%);
+			font-size: 0.85rem;
+			white-space: nowrap;
+		}
+		.logout-btn:hover {
+			opacity: 0.8;
+		}
+		
+		#messages {
+			flex: 1;
+			padding: 1rem;
+			overflow-y: scroll;
+			overflow-x: hidden;
+			min-height: 0;
+			-webkit-overflow-scrolling: touch;
+		}
+		#messages::-webkit-scrollbar {
+			width: 1ch;
+		}
+		#messages::-webkit-scrollbar-track {
+			background: #0b0b0d;
+		}
+		#messages::-webkit-scrollbar-thumb {
+			background: hsl(180,100%,50%);
+		}
+		#messages-wrapper {
+			display: flex;
+			flex-direction: column;
+			min-height: min-content;
+		}
+		.message {
+			position: relative;
+			font-size: 1.5rem;
+			padding: 0.5rem 1rem;
+			margin: 0.6rem 0;
+			max-width: 60%;
+			align-self: flex-end;
+			background: #0b0b0d;
+			border: 2px solid;
+			transition: transform 0.1s;
+		}
+		.message.youtube {
+			max-width: 80%;
+		}
+		.message iframe {
+			width: 100%;
+			aspect-ratio: 16/9;
+			border: none;
+			display: block;
+			margin-top: 0.5rem;
+		}
+		.message:hover { transform: translateX(-2px); }
+		.message .name, .message .time { position: absolute; background: #0b0b0d; }
+		.message .name { top: -0.6em; left: .6em; font-size: 1.5rem; }
+		.message .time { bottom: -0.6em; right: .6em; font-size: 1rem; }
+		
+		.system-message {
+			align-self: flex-start;
+			font-size: 1.5rem;
+			color: white;
+			background: transparent;
+			border: 1px dashed #666;
+			padding: 0.5rem 1rem;
+			margin: 0.6rem 0;
+			max-width: 60%;
+			position: relative;
+		}
 		.system-message:hover { transform: none; }
-		.system-message .time { color: var(--border-light); }
-		.system-message .highlight { font-weight: bold; }
-		#input-area { border-top: var(--border-width) solid var(--border-gray); display: flex; }
-		#input-area input { flex: 1; padding: var(--spacing); font-size: var(--font-lg); background: var(--bg-dark); color: hsl(var(--user-color, 180),100%,50%); border: none; outline: none; min-width: 0; }
-		#send-btn { padding: var(--spacing) 1.5rem; font-size: var(--font-lg); background: var(--border-gray); color: var(--white); border: none; border-left: var(--border-width) solid var(--border-gray); cursor: pointer; flex-shrink: 0; }
-		.modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: rgba(11,11,13,0.85); }
-		.modal-content { border: var(--border-width) solid var(--white); padding: 2rem; min-width: 300px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-		.modal-header { display: flex; justify-content: space-between; }
-		.modal input, .modal textarea { width: 100%; background: #222; color: var(--white); border: var(--border-width) solid var(--border-light); padding: 12px; font-size: 16px; outline: none; margin: 10px 0; }
-		.modal button { padding: 12px; border: none; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-		.error { color: #f00; }
+		.message .name, .message .time, .system-message .time { 
+			position: absolute; 
+			background: #0b0b0d; 
+		}
+		.system-message .time { color: #666; }
+		.system-message .highlight {
+			font-weight: bold;
+		}
+		
+		#input-area { border-top: 2px solid #333; display: flex; }
+		#input-area input {
+			flex: 1;
+			padding: 1rem;
+			font-size: 1.5rem;
+			background: #0b0b0d;
+			color: hsl(var(--user-color, 180),100%,50%);
+			border: none;
+			outline: none;
+			min-width: 0;
+		}
+		#send-btn {
+			padding: 1rem 1.5rem;
+			font-size: 1.5rem;
+			background: #333;
+			color: white;
+			border: none;
+			border-left: 2px solid #333;
+			cursor: pointer;
+			flex-shrink: 0;
+		}
+		
+		.modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 2000;
+		}
+		.modal-content {
+			border: 2px solid white;
+			padding: 2rem;
+			min-width: 300px;
+			max-width: 500px;
+			width: 90%;
+			max-height: 80vh;
+			overflow-y: auto;
+		}
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+		}
+		.modal input, .modal textarea {
+			width: 100%;
+			background: #222;
+			color: white;
+			border: 2px solid #666;
+			padding: 12px;
+			font-size: 16px;
+			outline: none;
+			margin: 10px 0;
+		}
+		.modal button {
+			padding: 12px;
+			border: none;
+			cursor: pointer;
+			width: 100%;
+			font-size: 16px;
+			margin-top: 10px;
+		}
+		.error { color: #f00;}
+		
 		.style-section { margin-block: 1.5rem; }
-		.style-label { color: var(--white); font-size: var(--font-md); margin-bottom: 0.8rem; display: block; }
-		.color-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-bottom: var(--spacing); }
-		.color-option, .border-option { cursor: pointer; }
-		.color-option { aspect-ratio: 1; width: 100%; height: 100%; }
-		.color-option.selected, .border-option.selected { border-color: var(--white); box-shadow: 0 0 8px rgba(255,255,255,1); }
+		.style-label {
+			color: white;
+			font-size: 1rem;
+			margin-bottom: 0.8rem;
+			display: block;
+		}
+		.color-grid {
+			display: grid;
+			grid-template-columns: repeat(12, 1fr);
+			gap: 6px;
+			margin-bottom: 1rem;
+		}
+		.color-option, .border-option {
+			cursor: pointer;
+		}
+		.color-option {
+			aspect-ratio: 1;
+			width: 100%;
+			height: 100%;
+		}
+		.color-option.selected, .border-option.selected {
+			border-color: white;
+			box-shadow: 0 0 8px rgba(255,255,255,1);
+		}
 		.border-options { display: flex; gap: 8px; }
-		.border-option { flex: 1; padding: 8px; background: transparent; text-align: center; font-size: var(--font-md); }
+		.border-option {
+			flex: 1;
+			padding: 8px;
+			background: transparent;
+			text-align: center;
+			font-size: 0.85rem;
+		}
 	</style>
 </head>
 <body>
@@ -461,14 +708,12 @@
 				};
 				document.querySelectorAll('.color-option').forEach(el => {
 					el.onclick = () => {
-						document.getElementById('unInput').blur();
 						state.color = el.dataset.color;
 						renderOverlay();
 					};
 				});
 				document.querySelectorAll('.border-option').forEach(el => {
 					el.onclick = () => {
-						document.getElementById('unInput').blur();
 						state.borderStyle = el.dataset.style;
 						renderOverlay();
 					};
@@ -482,27 +727,27 @@
 				const userColor = `hsl(${state.color},100%,50%)`;
 				header.innerHTML = `
 					<input type="text" id="username-input" value="${state.username}" maxlength="10" placeholder="Username" style="border-color: ${userColor}; color: ${userColor}">
-					<select id="color-select" style="color: ${userColor};">
+					<select id="color-select" style="border-color: ${userColor};">
 						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">Hue ${h}°</option>`).join('')}
 					</select>
-					<select id="border-select" style="color: ${userColor};">
+					<select id="border-select" style="border-color: ${userColor};">
 						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line Solid</option>
 						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line Dashed</option>
 						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line Dotted</option>
 					</select>
 					<button id="update-btn">UPDATE</button>
 					<div class="header-divider"></div>
-					<select id="sound-theme-select" style="color: ${userColor};">
+					<select id="sound-theme-select" style="border-color: ${userColor};">
 						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
 						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>Sound MSN</option>
 						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound Silent</option>
 					</select>
-					<select id="animations-select" style="color: ${userColor};">
+					<select id="animations-select" style="border-color: ${userColor};">
 						<option value="true" ${state.animationsEnabled?'selected':''}>FX: On</option>
 						<option value="false" ${!state.animationsEnabled?'selected':''}>FX: Off</option>
 					</select>
 					<span></span>
-					<button id="logoutBtn">LEAVE</button>
+					<button class="logout-btn" id="logoutBtn">LEAVE</button>
 				`;
 				
 				document.getElementById('color-select').onchange = (e) => {
@@ -512,10 +757,10 @@
 					document.body.style.borderColor = previewColor;
 					document.getElementById('username-input').style.borderColor = previewColor;
 					document.getElementById('username-input').style.color = previewColor;
-					document.getElementById('color-select').style.color = previewColor;
-					document.getElementById('border-select').style.color = previewColor;
-					document.getElementById('sound-theme-select').style.color = previewColor;
-					document.getElementById('animations-select').style.color = previewColor;
+					document.getElementById('color-select').style.borderColor = previewColor;
+					document.getElementById('border-select').style.borderColor = previewColor;
+					document.getElementById('sound-theme-select').style.borderColor = previewColor;
+					document.getElementById('animations-select').style.borderColor = previewColor;
 					
 					let style = document.getElementById('dynamic-scrollbar-preview');
 					if (!style) {
@@ -567,11 +812,6 @@
 					const messageInput = document.getElementById('messageInput');
 					if (messageInput) {
 						messageInput.style.color = `hsl(${state.color},100%,50%)`;
-					}
-					
-					const sendBtn = document.getElementById('send-btn');
-					if (sendBtn) {
-						sendBtn.style.color = `hsl(${state.color},100%,50%)`;
 					}
 					
 					document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
@@ -630,11 +870,6 @@
 			const messageInput = document.getElementById('messageInput');
 			if (messageInput) {
 				messageInput.style.color = `hsl(${state.color},100%,50%)`;
-			}
-			
-			const sendBtn = document.getElementById('send-btn');
-			if (sendBtn) {
-				sendBtn.style.color = `hsl(${state.color},100%,50%)`;
 			}
 			
 			document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
