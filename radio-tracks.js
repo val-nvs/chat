@@ -1,0 +1,23 @@
+export const RADIO_TRACKS = [
+	'Men I Trust - Norton Commander.mp3',
+	'Men I Trust - Oncle Jazz.mp3',
+	'Men I Trust - Show Me How.mp3',
+	'Salyu - Ai no Jikken.mp3',
+	'Salyu - Arabesque.mp3',
+	'Salyu - Glide.mp3',
+	'Salyu - Houwa.mp3',
+	'Salyu - Kaifukusuru Kizu.mp3',
+	'Salyu - Tobenai Tsubasa.mp3',
+	'Yui Makino - Arabesque N 1.mp3',
+	'Yui Makino - Clair de Lune (from Suite Bergamasque).mp3',
+	'Yui Makino - La fille aux cheveux de lin.mp3',
+	'Yui Makino - Prelude (from Suite Bergamasque).mp3',
+	'Jake Chudnow - Dream.mp3',
+	'C418 - Life changing moments seem minor in pictures.mp3',
+	'C418 - Lack of creativity is dangerous in Berlin.mp3',
+	'C418 - In Berlin people act differently.mp3',
+	'C418 - I will perhaps never meet you in person.mp3',
+	'C418 - I lack an emotion.mp3',
+	'C418 - Droopy likes your face.mp3',
+	'C418 - Droopy likes ricochet.mp3'
+];

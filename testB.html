@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>chat</title>
-		<style>
-:root {
+	<style>
+		:root {
 			--bg-dark: #0b0b0d;
 			--border-gray: #333;
 			--border-light: #666;
@@ -72,8 +72,7 @@
 		.color-option.selected, .border-option.selected { border-color: var(--white); box-shadow: 0 0 8px rgba(255,255,255,1); }
 		.border-options { display: flex; gap: 8px; }
 		.border-option { flex: 1; padding: 8px; background: transparent; text-align: center; font-size: var(--font-md); }
-	
-		</style>
+	</style>
 </head>
 <body>
 	<div id="app">
@@ -94,8 +93,6 @@
 		import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
 		import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
 		import { getDatabase, ref, push, onChildAdded, set, get, onDisconnect, onValue } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
-		import { RADIO_TRACKS } from './radio-tracks.js';
-
 
 		const app = initializeApp({
 			apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
@@ -124,9 +121,29 @@
 			120: 'Green',
 			150: 'Teal'
 		};
-
-
-
+		const RADIO_TRACKS = [
+			'Men I Trust - Norton Commander.mp3',
+			'Men I Trust - Oncle Jazz.mp3',
+			'Men I Trust - Show Me How.mp3',
+			'Salyu - Ai no Jikken.mp3',
+			'Salyu - Arabesque.mp3',
+			'Salyu - Glide.mp3',
+			'Salyu - Houwa.mp3',
+			'Salyu - Kaifukusuru Kizu.mp3',
+			'Salyu - Tobenai Tsubasa.mp3',
+			'Yui Makino - Arabesque N 1.mp3',
+			'Yui Makino - Clair de Lune (from Suite Bergamasque).mp3',
+			'Yui Makino - La fille aux cheveux de lin.mp3',
+			'Yui Makino - Prelude (from Suite Bergamasque).mp3',
+			'Jake Chudnow - Dream.mp3',
+			'C418 - Life changing moments seem minor in pictures.mp3',
+			'C418 - Lack of creativity is dangerous in Berlin.mp3',
+			'C418 - In Berlin people act differently.mp3',
+			'C418 - I will perhaps never meet you in person.mp3',
+			'C418 - I lack an emotion.mp3',
+			'C418 - Droopy likes your face.mp3',
+			'C418 - Droopy likes ricochet.mp3'
+		];
 
 		let state = {
 			user: null,
@@ -797,7 +814,8 @@
 					
 					await onDisconnect(presenceRef).remove();
 					
-						const timeoutMsgRef = push(ref(db, 'messages'));
+					const timeoutMsgKey = `timeout_${state.user.uid}_${Date.now()}`;
+					const timeoutMsgRef = ref(db, `messages/${timeoutMsgKey}`);
 					
 					await onDisconnect(timeoutMsgRef).set({
 						text: `${state.username} timed out`,
