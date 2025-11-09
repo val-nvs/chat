@@ -812,52 +812,66 @@
 			});
 		}
 
-		onAuthStateChanged(auth, async user => {
-			if (user) {
-				const snap = await get(ref(db, `users/${user.uid}`));
-				if (!snap.exists() || !snap.val()?.username) {
-					state.user = user;
-					state.showUsernamePrompt = true;
+onAuthStateChanged(auth, async user => {
+	if (user) {
+		const snap = await get(ref(db, `users/${user.uid}`));
+		if (!snap.exists() || !snap.val()?.username) {
+			state.user = user;
+			state.showUsernamePrompt = true;
+		} else {
+			state.user = user;
+			const data = snap.val();
+			state.username = data.username;
+			state.color = data.color || '180';
+			state.borderStyle = data.borderStyle || 'solid';
+			state.showUsernamePrompt = false;
+			
+			if (!state.hasJoinedChat) {
+				// Check if user was previously online (within last 5 seconds)
+				const presenceRef = ref(db, `presence/${user.uid}`);
+				const presenceSnap = await get(presenceRef);
+				const wasRecentlyOnline = presenceSnap.exists() && 
+					(Date.now() - presenceSnap.val().timestamp) < 5000;
+				
+				if (wasRecentlyOnline) {
+					// User relogged - send relogged message
+					await sendSystemMessage(`${state.username} relogged`, state.color, state.color);
 				} else {
-					state.user = user;
-					const data = snap.val();
-					state.username = data.username;
-					state.color = data.color || '180';
-					state.borderStyle = data.borderStyle || 'solid';
-					state.showUsernamePrompt = false;
-					
-					if (!state.hasJoinedChat) {
-						await sendSystemMessage(`${state.username} joined`, state.color, state.color);
-						state.hasJoinedChat = true;
-						await setupPresence();
-						
-						const radioRef = ref(db, 'radio');
-						const radioSnap = await get(radioRef);
-						if (!radioSnap.exists()) {
-							await set(radioRef, {
-								trackIndex: 0,
-								startTime: Date.now()
-							});
-						}
-						
-						playRadio();
-						renderRadioBar();
-						
-						if (state.soundTheme !== 'silent') {
-							enterSound.currentTime = 0;
-							enterSound.play().catch(() => {});
-						}
-					}
+					// Fresh join
+					await sendSystemMessage(`${state.username} joined`, state.color, state.color);
 				}
-			} else {
-				state.user = null;
-				state.username = '';
-				state.showUsernamePrompt = false;
-				state.hasJoinedChat = false;
+				
+				state.hasJoinedChat = true;
+				await setupPresence();
+				
+				const radioRef = ref(db, 'radio');
+				const radioSnap = await get(radioRef);
+				if (!radioSnap.exists()) {
+					await set(radioRef, {
+						trackIndex: 0,
+						startTime: Date.now(),
+						playing: true
+					});
+				}
+				
+				playRadio();
+				renderRadioBar();
+				
+				if (state.soundTheme !== 'silent') {
+					enterSound.currentTime = 0;
+					enterSound.play().catch(() => {});
+				}
 			}
-			state.isLoading = false;
-			renderOverlay();
-		});
+		}
+	} else {
+		state.user = null;
+		state.username = '';
+		state.showUsernamePrompt = false;
+		state.hasJoinedChat = false;
+	}
+	state.isLoading = false;
+	renderOverlay();
+});
 
 		renderOverlay();
 	</script>
