@@ -620,7 +620,7 @@
 						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line Dashed</option>
 						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line Dotted</option>
 					</select>
-					<button id="update-btn">UPDATE</button>
+					<button id="update-btn">UPDATE USER</button>
 					<div class="header-divider"></div>
 					<select id="sound-theme-select" style="color: ${userColor};">
 						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
@@ -630,8 +630,8 @@
 						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound Silent</option>
 					</select>
 					<select id="animations-select" style="color: ${userColor};">
-						<option value="true" ${state.animationsEnabled?'selected':''}>FX: On</option>
-						<option value="false" ${!state.animationsEnabled?'selected':''}>FX: Off</option>
+						<option value="true" ${state.animationsEnabled?'selected':''}>Effects: On</option>
+						<option value="false" ${!state.animationsEnabled?'selected':''}>Effects: Off</option>
 					</select>
 					<span></span>
 					<button id="logoutBtn">LEAVE</button>
