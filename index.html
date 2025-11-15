@@ -5,6 +5,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>chat</title>
 	<link rel="icon" href="./favicon.png">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="CHAT">
+	<link rel="apple-touch-icon" href="./favicon.png">
+	<meta name="theme-color" content="#0b0b0d">
 	<style>
 		:root {
 			--bg-dark: #0b0b0d;
@@ -120,6 +125,14 @@
 
 			const msg = snapshot.val();
 			addMessageToDOM(msg.userName, msg.text, msg.color, msg.borderStyle);
+			
+			// Send notification if not from current user
+			if (msg.userId !== state.user?.uid && Notification.permission === 'granted') {
+				new Notification(`${msg.userName}`, {
+					body: msg.text,
+					icon: './favicon.png'
+				});
+			}
 		});
 
 		function addMessageToDOM(userName, text, color, borderStyle) {
@@ -314,6 +327,11 @@
 					state.color = data.color || '180';
 					state.borderStyle = data.borderStyle || 'solid';
 					state.showUsernamePrompt = false;
+					
+					// Request notification permission
+					if (Notification.permission === 'default') {
+						Notification.requestPermission();
+					}
 				}
 			} else {
 				state.user = null;
