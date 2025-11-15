@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>chat</title>
-		<style>
-:root {
+	<style>
+		:root {
 			--bg-dark: #0b0b0d;
 			--border-gray: #333;
 			--border-light: #666;
@@ -22,64 +22,39 @@
 		* { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
 		html, body { height: 100%; overflow: hidden; background: var(--bg-dark); color: var(--white); }
 		body { border: 1px solid var(--accent-cyan); }
-		.login-overlay { position: fixed; inset: 0; background: rgba(11,11,13,0.85); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; z-index: 100; }
+		.login-overlay { position: fixed; inset: 0; background: rgba(11,11,13,0.3); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; z-index: 100; }
 		.login-overlay h1 { color: var(--accent-cyan); font-size: 3rem; margin-bottom: var(--spacing); }
 		.enter-btn { background: var(--accent-cyan); color: var(--bg-dark); padding: 16px 48px; border: none; font-size: var(--font-lg); cursor: pointer; }
 		#chat-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
-		#header-area { border-bottom: var(--border-width) solid var(--border-gray); display: grid; grid-template-columns: repeat(4, 1fr); padding: 0.25rem var(--spacing-half); align-items: center; gap: 0.25rem; overflow: hidden; }
-		#radio-bar { border-bottom: var(--border-width) solid var(--border-gray); display: flex; align-items: center; padding: var(--spacing-half); background: var(--bg-dark); overflow: hidden; }
-		#radio-display { color: var(--accent-cyan); font-size: var(--font-md); white-space: nowrap; animation: marquee 15s linear infinite; }
-		@keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-		#radio-mute-btn { background: var(--border-gray); color: var(--white); border: none; padding: 2px 8px; font-size: var(--font-md); cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; margin-left: auto; flex-shrink: 0; }
-		#radio-mute-btn:hover { opacity: 0.8; }
-		#header-area input { background: var(--bg-dark); color: var(--white); border: var(--border-width) solid var(--border-light); padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
-		#header-area select { background: var(--border-gray); color: var(--accent-cyan); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; overflow: hidden; width: 100%; min-width: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
-		#header-area button { background: var(--border-gray); color: var(--white); border: none; padding: 2px 4px; font-size: var(--font-md); outline: none; width: 100%; cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; }
-		#header-area select option { background: var(--bg-dark); }
-		#sound-theme-select { grid-column: 1; }
-		#animations-select { grid-column: 2; }
-		#update-btn, #logoutBtn { grid-column: 4; }
-		#update-btn:hover, #logoutBtn:hover { opacity: 0.8; }
-		#header-area #logoutBtn { color: var(--accent-red); }
-		#messages { flex: 1; padding: var(--spacing); overflow-y: scroll; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; }
+		#header-area { border-bottom: var(--border-width) solid var(--border-gray); display: flex; padding: 0.25rem var(--spacing-half); align-items: center; gap: 0.25rem; overflow: hidden; justify-content: space-between; }
+		#logoutBtn { padding: 2px 4px; font-size: var(--font-md); background: var(--border-gray); color: var(--accent-red); border: none; outline: none; width: auto; cursor: pointer; white-space: nowrap; -webkit-appearance: none; appearance: none; }
+		#logoutBtn:hover { opacity: 0.8; }
+		#messages { flex: 1; padding: var(--spacing); overflow-y: scroll; overflow-x: hidden; min-height: 0; }
 		#messages::-webkit-scrollbar { width: 1ch; }
 		#messages::-webkit-scrollbar-track { background: var(--bg-dark); }
 		#messages::-webkit-scrollbar-thumb { background: var(--accent-cyan); }
 		#messages-wrapper { display: flex; flex-direction: column; min-height: min-content; }
-		.message { position: relative; font-size: var(--font-lg); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; align-self: flex-end; background: var(--bg-dark); border: var(--border-width) solid; transition: transform 0.1s; }
-		.message.youtube { max-width: 80%; }
-		.message iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; margin-top: var(--spacing-half); }
-		.message .name, .message .time, .system-message .time { position: absolute; background: var(--bg-dark); }
-		.message .name { top: -0.6em; left: .6em; font-size: var(--font-lg); }
-		.message .time, .system-message .time { bottom: -0.6em; right: .6em; font-size: var(--font-lg); transform: scaleY(0.6); }
-		.system-message { align-self: flex-start; font-size: var(--font-lg); color: var(--white); background: transparent; border: 1px dashed var(--border-light); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; position: relative; }
-		.system-message:hover { transform: none; }
-		.system-message .time { color: var(--border-light); }
+		.message { position: relative; font-size: var(--font-lg); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; align-self: flex-end; background: var(--bg-dark); border: var(--border-width) solid; }
+		.message .name { position: absolute; top: -0.6em; left: .6em; font-size: var(--font-lg); background: var(--bg-dark); }
+		.message .time { position: absolute; bottom: -0.6em; right: .6em; font-size: var(--font-lg); transform: scaleY(0.6); background: var(--bg-dark); }
 		#input-area { border-top: var(--border-width) solid var(--border-gray); display: flex; }
-		#input-area input { flex: 1; padding: var(--spacing); font-size: var(--font-lg); background: var(--bg-dark); color: hsl(var(--user-color, 180),100%,50%); border: none; outline: none; min-width: 0; }
+		#input-area input { flex: 1; padding: var(--spacing); font-size: var(--font-lg); background: var(--bg-dark); color: var(--accent-cyan); border: none; outline: none; min-width: 0; }
 		#send-btn { padding: var(--spacing) 1.5rem; font-size: var(--font-lg); background: var(--border-gray); color: var(--white); border: none; border-left: var(--border-width) solid var(--border-gray); cursor: pointer; flex-shrink: 0; }
 		.modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: rgba(11,11,13,0.85); }
-		.modal-content { border: var(--border-width) solid var(--white); padding: 2rem; min-width: 300px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-		.modal-header { display: flex; justify-content: space-between; }
-		.modal input, .modal textarea { width: 100%; background: #222; color: var(--white); border: var(--border-width) solid var(--border-light); padding: 12px; font-size: 16px; outline: none; margin: 10px 0; }
-		.modal button { padding: 12px; border: none; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-		.error { color: #f00; }
-		.style-section { margin-block: 1.5rem; }
-		.style-label { color: var(--white); font-size: var(--font-md); margin-bottom: 0.8rem; display: block; }
-		.color-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-bottom: var(--spacing); }
-		.color-option, .border-option { cursor: pointer; }
-		.color-option { aspect-ratio: 1; width: 100%; height: 100%; }
-		.color-option.selected, .border-option.selected { border-color: var(--white); box-shadow: 0 0 8px rgba(255,255,255,1); }
-		.border-options { display: flex; gap: 8px; }
-		.border-option { flex: 1; padding: 8px; background: transparent; text-align: center; font-size: var(--font-md); }
-	
-		</style>
+		.modal-content { border: var(--border-width) solid var(--white); padding: 2rem; min-width: 300px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; background: var(--bg-dark); }
+		.modal-header { font-size: var(--font-lg); margin-bottom: 1rem; color: var(--accent-cyan); }
+		.modal input { width: 100%; background: #222; color: var(--white); border: var(--border-width) solid var(--border-light); padding: 12px; font-size: 16px; outline: none; margin: 10px 0; }
+		.modal button { padding: 12px; border: none; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; background: var(--border-gray); color: var(--white); }
+		.error { color: #f00; margin: 10px 0; }
+		.color-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin: 10px 0; }
+		.color-option { aspect-ratio: 1; cursor: pointer; border: 2px solid; }
+		.color-option.selected { border-color: white; box-shadow: 0 0 8px rgba(255,255,255,1); }
+	</style>
 </head>
 <body>
 	<div id="app">
 		<div id="chat-app">
 			<div id="header-area"></div>
-			<div id="radio-bar"></div>
 			<div id="messages">
 				<div id="messages-wrapper"></div>
 			</div>
@@ -93,9 +68,7 @@
 	<script type="module">
 		import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
 		import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
-		import { getDatabase, ref, push, onChildAdded, set, get, onDisconnect, onValue } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
-		import { RADIO_TRACKS } from './radio-tracks.js';
-
+		import { getDatabase, ref, push, onChildAdded, set, get } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js';
 
 		const app = initializeApp({
 			apiKey: "AIzaSyB-UPrXMblPcO1gcdD0GuEhBA8JGMpbGs4",
@@ -109,24 +82,12 @@
 
 		const auth = getAuth(app);
 		const db = getDatabase(app);
+		
 		const COLORS = [180, 210, 240, 270, 300, 330, 0, 30, 60, 90, 120, 150];
 		const COLOR_NAMES = {
-			180: 'Cyan',
-			210: 'Sky',
-			240: 'Blue',
-			270: 'Purple',
-			300: 'Magenta',
-			330: 'Pink',
-			0: 'Red',
-			30: 'Orange',
-			60: 'Yellow',
-			90: 'Lime',
-			120: 'Green',
-			150: 'Teal'
+			180: 'Cyan', 210: 'Sky', 240: 'Blue', 270: 'Purple', 300: 'Magenta', 330: 'Pink',
+			0: 'Red', 30: 'Orange', 60: 'Yellow', 90: 'Lime', 120: 'Green', 150: 'Teal'
 		};
-
-
-
 
 		let state = {
 			user: null,
@@ -138,153 +99,9 @@
 			usernameInput: '',
 			error: '',
 			isLoading: false,
-			lastAnimatedId: null,
-			hasJoinedChat: false,
-			timeoutMsgRef: null,
-			soundTheme: 'default',
-			animationsEnabled: true,
-			radioMuted: false
 		};
 
-		const messages = [];
 		const loadedIds = new Set();
-		
-		let radioAudio = new Audio();
-		let radioStartTime = 0;
-		let currentTrackIndex = 0;
-		let radioPlaying = false;
-		
-		function getRadioPath(filename) {
-			return `./radio/${filename}`;
-		}
-		
-		function playRadio() {
-			if (!state.user) return;
-			
-			const radioRef = ref(db, 'radio');
-			onValue(radioRef, (snapshot) => {
-				const data = snapshot.val();
-				if (data) {
-					const { trackIndex, startTime, playing } = data;
-					const wasPlaying = radioPlaying;
-					radioPlaying = playing !== false;
-					
-					if (!radioPlaying) {
-						radioAudio.pause();
-						updateRadioDisplay();
-						return;
-					}
-					
-					const elapsed = (Date.now() - startTime) / 1000;
-					
-					if (trackIndex !== currentTrackIndex || (!wasPlaying && radioPlaying)) {
-						currentTrackIndex = trackIndex;
-						radioAudio.src = getRadioPath(RADIO_TRACKS[trackIndex]);
-						radioAudio.currentTime = Math.max(0, elapsed);
-						updateRadioDisplay();
-						if (!state.radioMuted && radioPlaying) {
-							radioAudio.play().catch(e => console.log('Play failed:', e));
-						}
-					}
-				}
-			});
-			
-			radioAudio.addEventListener('ended', async () => {
-				if (state.user && radioPlaying) {
-					const nextIndex = (currentTrackIndex + 1) % RADIO_TRACKS.length;
-					await set(ref(db, 'radio'), {
-						trackIndex: nextIndex,
-						startTime: Date.now(),
-						playing: true
-					});
-				}
-			});
-		}
-		
-		function updateRadioDisplay() {
-			const display = document.getElementById('radio-display');
-			if (display) {
-				if (!radioPlaying) {
-					display.textContent = `Radio stopped`;
-				} else {
-					const filename = RADIO_TRACKS[currentTrackIndex].replace('.mp3', '');
-					display.textContent = `♪ ${filename} ♪`;
-				}
-			}
-		}
-		
-		async function radioSkip() {
-			if (!state.user) return;
-			const nextIndex = Math.floor(Math.random() * RADIO_TRACKS.length);
-			await set(ref(db, 'radio'), {
-				trackIndex: nextIndex,
-				startTime: Date.now(),
-				playing: true
-			});
-		}
-		
-		async function radioStop() {
-			if (!state.user) return;
-			await set(ref(db, 'radio'), {
-				trackIndex: currentTrackIndex,
-				startTime: Date.now(),
-				playing: false
-			});
-		}
-		
-		async function radioStart() {
-			if (!state.user) return;
-			
-			// Set playing state in Firebase
-			await set(ref(db, 'radio'), {
-				trackIndex: currentTrackIndex,
-				startTime: Date.now(),
-				playing: true
-			});
-		}
-		
-		function toggleRadioMute() {
-			state.radioMuted = !state.radioMuted;
-			if (state.radioMuted) {
-				radioAudio.pause();
-			} else if (radioPlaying && radioAudio.src) {
-				radioAudio.play().catch(e => console.log('Play failed:', e));
-			}
-			renderRadioBar();
-		}
-		
-		function renderRadioBar() {
-			const radioBar = document.getElementById('radio-bar');
-			if (radioBar && state.user) {
-				const filename = RADIO_TRACKS[currentTrackIndex].replace('.mp3', '');
-				const displayText = radioPlaying ? `♪ ${filename} ♪` : 'Radio stopped';
-				radioBar.innerHTML = `
-					<span id="radio-display">${displayText}</span>
-					<button id="radio-mute-btn">${state.radioMuted ? 'UNMUTE' : 'MUTE'}</button>
-				`;
-				document.getElementById('radio-mute-btn').onclick = toggleRadioMute;
-			}
-		}
-		
-		function getSoundPath(theme, type) {
-			if (theme === 'silent') return null;
-			return `./sounds/${theme}/${type}.wav`;
-		}
-		
-		let typingSound = new Audio(getSoundPath('default', 'type'));
-		let finishSound = new Audio(getSoundPath('default', 'message'));
-		let enterSound = new Audio(getSoundPath('default', 'load'));
-		let userJoinedSound = new Audio(getSoundPath('default', 'join'));
-		
-		function updateSoundTheme(theme) {
-			state.soundTheme = theme;
-			if (theme !== 'silent') {
-				typingSound = new Audio(getSoundPath(theme, 'type'));
-				finishSound = new Audio(getSoundPath(theme, 'message'));
-				enterSound = new Audio(getSoundPath(theme, 'load'));
-				userJoinedSound = new Audio(getSoundPath(theme, 'join'));
-			}
-		}
 
 		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
 		document.getElementById('messageInput').onkeypress = e => {
@@ -300,100 +117,31 @@
 			if (loadedIds.has(id)) return;
 			loadedIds.add(id);
 
-			const msg = { id, ...snapshot.val() };
-			messages.push(msg);
-			if (messages.length > 30) messages.shift();
-
-			// Check for radio commands
-			if (msg.text === '/play') {
-				await radioStart();
-			} else if (msg.text === '/skip') {
-				await radioSkip();
-			} else if (msg.text === '/stop') {
-				await radioStop();
-			}
-
-			addMessageToDOM(msg, true);
+			const msg = snapshot.val();
+			addMessageToDOM(msg.userName, msg.text, msg.color, msg.borderStyle);
 		});
 
-		function addMessageToDOM(msg, animate) {
+		function addMessageToDOM(userName, text, color, borderStyle) {
 			const container = document.getElementById('messages-wrapper');
 			if (!container) return;
 
-			while (container.children.length >= 30) {
-				container.removeChild(container.firstChild);
-			}
-
 			const el = document.createElement('div');
-			const isSystem = msg.type === 'system';
-			el.className = isSystem ? 'system-message' : 'message';
+			el.className = 'message';
 			
-			if (isSystem) {
-				if (msg.oldColor && msg.newColor) {
-					const parts = msg.text.split(' is now ');
-					if (parts.length === 2) {
-						const oldName = parts[0];
-						const newName = parts[1];
-						const oldColorStyle = `hsl(${msg.oldColor},100%,50%)`;
-						const newColorStyle = `hsl(${msg.newColor},100%,50%)`;
-						el.innerHTML = `<span class="highlight" style="color: ${oldColorStyle}">${oldName}</span> is now <span class="highlight" style="color: ${newColorStyle}">${newName}</span><span class="time">${formatTime(msg.timestamp)}</span>`;
-					} else {
-						const words = msg.text.split(' ');
-						const username = words[0];
-						const action = words.slice(1).join(' ');
-						const userColor = msg.oldColor ? `hsl(${msg.oldColor},100%,50%)` : 'white';
-						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
-						
-						if (action === 'joined' && animate && state.soundTheme !== 'silent') {
-							userJoinedSound.currentTime = 0;
-							userJoinedSound.play().catch(() => {});
-						}
-					}
-				} else {
-					const parts = msg.text.split(' ');
-					if (parts.length >= 2) {
-						const username = parts[0];
-						const action = parts.slice(1).join(' ');
-						const userColor = msg.userColor ? `hsl(${msg.userColor},100%,50%)` : 'white';
-						el.innerHTML = `<span class="highlight" style="color: ${userColor}">${username}</span> ${action}<span class="time">${formatTime(msg.timestamp)}</span>`;
-					} else {
-						el.innerHTML = `${msg.text}<span class="time">${formatTime(msg.timestamp)}</span>`;
-					}
-				}
-			} else {
-				const light = `hsl(${msg.color},100%,50%)`;
-				const dark = `hsl(${msg.color},100%,30%)`;
-				el.style.color = light;
-				el.style.borderColor = dark;
-				el.style.borderStyle = msg.borderStyle;
-				
-				if (msg.youtubeId) {
-					el.classList.add('youtube');
-					el.innerHTML = `
-						<span class="name" style="color:${dark}"></span>
-						<span class="text"></span>
-						<iframe src="https://www.youtube.com/embed/${msg.youtubeId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-						<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
-					`;
-				} else {
-					el.innerHTML = `
-						<span class="name" style="color:${dark}"></span>
-						<span class="text"></span>
-						<span class="time" style="color:${dark}">${formatTime(msg.timestamp)}</span>
-					`;
-				}
-				
-				if (animate && state.user && state.animationsEnabled) {
-					animateMessage(el, msg.userName, msg.text);
-				} else {
-					el.querySelector('.name').textContent = msg.userName;
-					el.querySelector('.text').textContent = msg.text;
-					if (animate && state.user && state.soundTheme !== 'silent') {
-						finishSound.currentTime = 0;
-						finishSound.play().catch(() => {});
-					}
-				}
-			}
+			const light = `hsl(${color},100%,50%)`;
+			const dark = `hsl(${color},100%,30%)`;
+			el.style.color = light;
+			el.style.borderColor = dark;
+			el.style.borderStyle = borderStyle;
+			
+			const time = new Date();
+			const timeStr = `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}`;
+			
+			el.innerHTML = `
+				<span class="name" style="color:${dark}">${userName}</span>
+				<span class="text">${text}</span>
+				<span class="time" style="color:${dark}">${timeStr}</span>
+			`;
 			
 			container.appendChild(el);
 
@@ -403,100 +151,36 @@
 			}
 		}
 
-		function animateMessage(el, userName, text) {
-			const nameEl = el.querySelector('.name');
-			const textEl = el.querySelector('.text');
-			if (!nameEl || !textEl) return;
-			
-			let ni = 0, ti = 0;
-			function type() {
-				let typed = false;
-				if (ni < userName.length) {
-					nameEl.textContent += userName[ni++];
-					typed = true;
-				}
-				if (ti < text.length) {
-					textEl.textContent += text[ti++];
-					typed = true;
-				}
-				
-				if (typed && state.soundTheme !== 'silent' && state.animationsEnabled) {
-					typingSound.currentTime = 0;
-					typingSound.play().catch(() => {});
-				}
-				
-				document.getElementById('messages').scrollTop = 9999;
-				
-				if (ni < userName.length || ti < text.length) {
-					setTimeout(type, 80);
-				} else {
-					if (state.soundTheme !== 'silent' && state.animationsEnabled) {
-						finishSound.currentTime = 0;
-						finishSound.play().catch(() => {});
-					}
-				}
-			}
-			type();
-		}
-
-		function formatTime(ts) {
-			const d = new Date(ts);
-			return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-		}
-
 		async function sendMessage() {
 			if (!state.user || !state.input.trim()) return;
 			
 			const text = state.input.trim();
 			
-			let messageData = {
+			await push(ref(db, 'messages'), {
 				userId: state.user.uid,
 				userName: state.username,
 				text: text,
 				timestamp: Date.now(),
 				color: state.color,
-				borderStyle: state.borderStyle,
-				type: 'user'
-			};
+				borderStyle: state.borderStyle
+			});
 			
-			const youtubeRegex = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-			const match = text.match(youtubeRegex);
-			if (match) {
-				const videoId = match[3];
-				messageData.youtubeId = videoId;
-				messageData.text = `youtube.com/watch?v=${videoId}`;
-			}
-			
-			await push(ref(db, 'messages'), messageData);
 			state.input = '';
 			document.getElementById('messageInput').value = '';
 		}
 
-		async function sendSystemMessage(text, oldColor = null, newColor = null) {
-			await push(ref(db, 'messages'), {
-				text: text,
-				timestamp: Date.now(),
-				type: 'system',
-				oldColor: oldColor,
-				newColor: newColor
-			});
-		}
-
-		async function enterChat() {
+		function enterChat() {
 			state.isLoading = true;
 			renderOverlay();
-			try {
-				await signInAnonymously(auth);
-				console.log('Auth successful');
-			} catch (err) {
+			signInAnonymously(auth).catch(err => {
 				console.error('Auth error:', err);
 				state.error = 'Failed to enter chat: ' + err.message;
 				state.isLoading = false;
 				renderOverlay();
-			}
+			});
 		}
 
-		async function confirmUsername() {
+		function confirmUsername() {
 			const un = state.usernameInput.trim();
 			if (!un) {
 				state.error = 'Enter a username';
@@ -510,7 +194,7 @@
 				return;
 			}
 			
-			await set(ref(db, `users/${state.user.uid}`), {
+			set(ref(db, `users/${state.user.uid}`), {
 				username: un,
 				color: state.color,
 				borderStyle: state.borderStyle
@@ -519,27 +203,12 @@
 			state.username = un;
 			state.showUsernamePrompt = false;
 			state.error = '';
-			
-			if (!state.hasJoinedChat) {
-				await sendSystemMessage(`${un} joined`, state.color, state.color);
-				state.hasJoinedChat = true;
-				await setupPresence();
-				
-				if (state.soundTheme !== 'silent') {
-					enterSound.currentTime = 0;
-					enterSound.play().catch(() => {});
-				}
-			}
-			
 			renderOverlay();
 		}
 
 		function renderOverlay() {
 			const existing = document.getElementById('overlay');
 			if (existing) existing.remove();
-			
-			const existing2 = document.getElementById('controls');
-			if (existing2) existing2.remove();
 
 			if (!state.user) {
 				const div = document.createElement('div');
@@ -566,14 +235,10 @@
 						<div class="modal-header">CHOOSE USERNAME</div>
 						${state.error ? `<div class="error">${state.error}</div>` : ''}
 						<input id="unInput" type="text" value="${state.usernameInput}" maxlength="10" placeholder="Username" autocomplete="off">
-						<div class="style-section">
-							<span class="style-label">COLOR</span>
+						<div style="margin: 1.5rem 0;">
+							<div style="color: white; margin-bottom: 0.8rem;">COLOR</div>
 							<div class="color-grid" id="colorGrid">
-								${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);border:2px solid ${state.color==h?'white':'hsl('+h+',100%,30%)'}"></div>`).join('')}
-							</div>
-							<span class="style-label">BORDER</span>
-							<div class="border-options">
-								${['solid','dashed','dotted'].map(s => `<div class="border-option ${state.borderStyle===s?'selected':''}" data-style="${s}" style="border:2px ${s} hsl(${state.color},100%,30%)">${s.toUpperCase()}</div>`).join('')}
+								${COLORS.map(h => `<div class="color-option ${state.color==h?'selected':''}" data-color="${h}" style="background:hsl(${h},100%,50%);"></div>`).join('')}
 							</div>
 						</div>
 						<button id="confirmBtn">START CHATTING</button>
@@ -581,9 +246,7 @@
 				`;
 				document.body.appendChild(div);
 				const input = document.getElementById('unInput');
-				if (!state.usernameInput) {
-					input.focus();
-				}
+				input.focus();
 				input.oninput = e => state.usernameInput = e.target.value;
 				input.onkeypress = e => {
 					if (e.key === 'Enter') {
@@ -597,12 +260,6 @@
 						renderOverlay();
 					};
 				});
-				document.querySelectorAll('.border-option').forEach(el => {
-					el.onclick = () => {
-						state.borderStyle = el.dataset.style;
-						renderOverlay();
-					};
-				});
 				document.getElementById('confirmBtn').onclick = confirmUsername;
 				return;
 			}
@@ -611,267 +268,60 @@
 			if (header) {
 				const userColor = `hsl(${state.color},100%,50%)`;
 				header.innerHTML = `
-					<input type="text" id="username-input" value="${state.username}" maxlength="10" placeholder="Username" style="border-color: ${userColor}; color: ${userColor}">
-					<select id="color-select" style="color: ${userColor};">
-						${COLORS.map(h => `<option value="${h}" ${state.color==h?'selected':''} style="color: hsl(${h},100%,50%);">${COLOR_NAMES[h]} ${h}°</option>`).join('')}
-					</select>
-					<select id="border-select" style="color: ${userColor};">
-						<option value="solid" ${state.borderStyle==='solid'?'selected':''}>Line Solid</option>
-						<option value="dashed" ${state.borderStyle==='dashed'?'selected':''}>Line Dashed</option>
-						<option value="dotted" ${state.borderStyle==='dotted'?'selected':''}>Line Dotted</option>
-					</select>
-					<button id="update-btn">UPDATE USER</button>
-					<div class="header-divider"></div>
-					<select id="sound-theme-select" style="color: ${userColor};">
-						<option value="default" ${state.soundTheme==='default'?'selected':''}>Sound Default</option>
-						<option value="msn" ${state.soundTheme==='msn'?'selected':''}>Sound MSN</option>
-						<option value="original" ${state.soundTheme==='original'?'selected':''}>Sound Original</option>
-						<option value="cool" ${state.soundTheme==='cool'?'selected':''}>Sound Cool</option>
-						<option value="silent" ${state.soundTheme==='silent'?'selected':''}>Sound Silent</option>
-					</select>
-					<select id="animations-select" style="color: ${userColor};">
-						<option value="true" ${state.animationsEnabled?'selected':''}>Effects: On</option>
-						<option value="false" ${!state.animationsEnabled?'selected':''}>Effects: Off</option>
-					</select>
-					<span></span>
+					<span style="color: ${userColor}; font-size: var(--font-lg); font-weight: bold;">${state.username}</span>
 					<button id="logoutBtn">LEAVE</button>
 				`;
 				
-				document.getElementById('color-select').onchange = (e) => {
-					const newColor = e.target.value;
-					const previewColor = `hsl(${newColor},100%,50%)`;
-					
-					document.body.style.borderColor = previewColor;
-					document.getElementById('username-input').style.borderColor = previewColor;
-					document.getElementById('username-input').style.color = previewColor;
-					document.getElementById('color-select').style.color = previewColor;
-					document.getElementById('border-select').style.color = previewColor;
-					document.getElementById('sound-theme-select').style.color = previewColor;
-					document.getElementById('animations-select').style.color = previewColor;
-					
-					let style = document.getElementById('dynamic-scrollbar-preview');
-					if (!style) {
-						style = document.createElement('style');
-						style.id = 'dynamic-scrollbar-preview';
-						document.head.appendChild(style);
-					}
-					style.textContent = `#messages::-webkit-scrollbar-thumb { background: ${previewColor}; }`;
-				};
-				
-				document.getElementById('update-btn').onclick = async () => {
-					const newUsername = document.getElementById('username-input').value.trim();
-					const newColor = document.getElementById('color-select').value;
-					const newBorderStyle = document.getElementById('border-select').value;
-					const oldUsername = state.username;
-					const oldColor = state.color;
-					
-					if (!newUsername) {
-						alert('Username cannot be empty');
-						return;
-					}
-					
-					if (newUsername.length < 2 || newUsername.length > 10) {
-						alert('Username must be 2-10 characters');
-						return;
-					}
-					
-					const nameChanged = newUsername !== oldUsername;
-					const colorChanged = newColor !== oldColor;
-					
-					if (nameChanged || colorChanged) {
-						let message = `${oldUsername} is now ${newUsername}`;
-						await sendSystemMessage(message, oldColor, newColor);
-						state.username = newUsername;
-					}
-					
-					state.color = newColor;
-					state.borderStyle = newBorderStyle;
-					
-					const userRef = ref(db, `users/${state.user.uid}`);
-					await set(userRef, {
-						username: state.username,
-						color: state.color,
-						borderStyle: state.borderStyle
-					});
-					
-					await setupPresence();
-					
-					const messageInput = document.getElementById('messageInput');
-					if (messageInput) {
-						messageInput.style.color = `hsl(${state.color},100%,50%)`;
-					}
-					
-					const sendBtn = document.getElementById('send-btn');
-					if (sendBtn) {
-						sendBtn.style.color = `hsl(${state.color},100%,50%)`;
-					}
-					
-					document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
-					const style = document.createElement('style');
-					style.id = 'dynamic-scrollbar';
-					const existingStyle = document.getElementById('dynamic-scrollbar');
-					if (existingStyle) existingStyle.remove();
-					style.textContent = `#messages::-webkit-scrollbar-thumb { background: hsl(${state.color},100%,50%); }`;
-					document.head.appendChild(style);
-					
-					renderOverlay();
-				};
-				
-				document.getElementById('sound-theme-select').onchange = (e) => {
-					updateSoundTheme(e.target.value);
-				};
-				
-				document.getElementById('animations-select').onchange = (e) => {
-					state.animationsEnabled = e.target.value === 'true';
-				};
-			}
-			
-			document.getElementById('logoutBtn').onclick = async () => {
-				try {
-					if (state.timeoutMsgRef) {
-						await onDisconnect(state.timeoutMsgRef).cancel();
-					}
-					
-					if (state.username) {
-						await sendSystemMessage(`${state.username} left`, state.color, state.color);
-					}
-					
-					if (state.user) {
-						const presenceRef = ref(db, `presence/${state.user.uid}`);
-						await onDisconnect(presenceRef).cancel();
-						await set(presenceRef, null);
-					}
-					
+				document.getElementById('logoutBtn').onclick = async () => {
 					state.user = null;
 					state.username = '';
-					state.hasJoinedChat = false;
-					state.timeoutMsgRef = null;
-					
+					state.showUsernamePrompt = false;
 					await signOut(auth);
 					renderOverlay();
-				} catch (err) {
-					console.error('Logout error:', err);
-					state.user = null;
-					state.username = '';
-					state.hasJoinedChat = false;
-					await signOut(auth);
-					renderOverlay();
-				}
-			};
-			
-			const messageInput = document.getElementById('messageInput');
-			if (messageInput) {
-				messageInput.style.color = `hsl(${state.color},100%,50%)`;
-			}
-			
-			const sendBtn = document.getElementById('send-btn');
-			if (sendBtn) {
-				sendBtn.style.color = `hsl(${state.color},100%,50%)`;
-			}
-			
-			renderRadioBar();
-			
-			document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
-			const style = document.createElement('style');
-			style.id = 'dynamic-scrollbar';
-			const existingStyle = document.getElementById('dynamic-scrollbar');
-			if (existingStyle) existingStyle.remove();
-			style.textContent = `#messages::-webkit-scrollbar-thumb { background: hsl(${state.color},100%,50%); }`;
-			document.head.appendChild(style);
-		}
-
-		async function setupPresence() {
-			if (!state.user || !state.username) return;
-			
-			const presenceRef = ref(db, `presence/${state.user.uid}`);
-			const connectedRef = ref(db, '.info/connected');
-			
-			onValue(connectedRef, async (snapshot) => {
-				if (snapshot.val() === true && state.user && state.username) {
-					await set(presenceRef, {
-						username: state.username,
-						color: state.color,
-						online: true,
-						timestamp: Date.now()
-					});
-					
-					await onDisconnect(presenceRef).remove();
-					
-						const timeoutMsgRef = push(ref(db, 'messages'));
-					
-					await onDisconnect(timeoutMsgRef).set({
-						text: `${state.username} timed out`,
-						timestamp: Date.now(),
-						type: 'system',
-						oldColor: state.color,
-						newColor: state.color
-					});
-					
-					state.timeoutMsgRef = timeoutMsgRef;
-				}
-			});
-		}
-
-onAuthStateChanged(auth, async user => {
-	if (user) {
-		const snap = await get(ref(db, `users/${user.uid}`));
-		if (!snap.exists() || !snap.val()?.username) {
-			state.user = user;
-			state.showUsernamePrompt = true;
-		} else {
-			state.user = user;
-			const data = snap.val();
-			state.username = data.username;
-			state.color = data.color || '180';
-			state.borderStyle = data.borderStyle || 'solid';
-			state.showUsernamePrompt = false;
-			
-			if (!state.hasJoinedChat) {
-				// Check if user was previously online (within last 5 seconds)
-				const presenceRef = ref(db, `presence/${user.uid}`);
-				const presenceSnap = await get(presenceRef);
-				const wasRecentlyOnline = presenceSnap.exists() && 
-					(Date.now() - presenceSnap.val().timestamp) < 5000;
+				};
 				
-				if (wasRecentlyOnline) {
-					// User relogged - send relogged message
-					await sendSystemMessage(`${state.username} relogged`, state.color, state.color);
+				const messageInput = document.getElementById('messageInput');
+				if (messageInput) {
+					messageInput.style.color = `hsl(${state.color},100%,50%)`;
+				}
+				
+				const sendBtn = document.getElementById('send-btn');
+				if (sendBtn) {
+					sendBtn.style.color = `hsl(${state.color},100%,50%)`;
+				}
+				
+				document.body.style.borderColor = `hsl(${state.color},100%,50%)`;
+				const style = document.createElement('style');
+				style.id = 'dynamic-scrollbar';
+				const existingStyle = document.getElementById('dynamic-scrollbar');
+				if (existingStyle) existingStyle.remove();
+				style.textContent = `#messages::-webkit-scrollbar-thumb { background: hsl(${state.color},100%,50%); }`;
+				document.head.appendChild(style);
+			}
+		}
+
+		onAuthStateChanged(auth, async user => {
+			if (user) {
+				const snap = await get(ref(db, `users/${user.uid}`));
+				if (!snap.exists() || !snap.val()?.username) {
+					state.user = user;
+					state.showUsernamePrompt = true;
 				} else {
-					// Fresh join
-					await sendSystemMessage(`${state.username} joined`, state.color, state.color);
+					state.user = user;
+					const data = snap.val();
+					state.username = data.username;
+					state.color = data.color || '180';
+					state.borderStyle = data.borderStyle || 'solid';
+					state.showUsernamePrompt = false;
 				}
-				
-				state.hasJoinedChat = true;
-				await setupPresence();
-				
-				const radioRef = ref(db, 'radio');
-				const radioSnap = await get(radioRef);
-				if (!radioSnap.exists()) {
-					await set(radioRef, {
-						trackIndex: 0,
-						startTime: Date.now(),
-						playing: true
-					});
-				}
-				
-				playRadio();
-				renderRadioBar();
-				
-				if (state.soundTheme !== 'silent') {
-					enterSound.currentTime = 0;
-					enterSound.play().catch(() => {});
-				}
+			} else {
+				state.user = null;
+				state.username = '';
+				state.showUsernamePrompt = false;
 			}
-		}
-	} else {
-		state.user = null;
-		state.username = '';
-		state.showUsernamePrompt = false;
-		state.hasJoinedChat = false;
-	}
-	state.isLoading = false;
-	renderOverlay();
-});
+			state.isLoading = false;
+			renderOverlay();
+		});
 
 		renderOverlay();
 	</script>
