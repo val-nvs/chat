@@ -124,7 +124,8 @@
 			loadedIds.add(id);
 
 			const msg = snapshot.val();
-			addMessageToDOM(msg.userName, msg.text, msg.color, msg.borderStyle);
+			// Pass the timestamp from the database message object
+			addMessageToDOM(msg.userName, msg.text, msg.color, msg.borderStyle, msg.timestamp);
 			
 			// Send notification if not from current user
 			if (msg.userId !== state.user?.uid && Notification.permission === 'granted') {
@@ -135,7 +136,15 @@
 			}
 		});
 
-		function addMessageToDOM(userName, text, color, borderStyle) {
+		/**
+		 * Adds a message to the DOM using the original message timestamp.
+		 * @param {string} userName 
+		 * @param {string} text 
+		 * @param {string} color 
+		 * @param {string} borderStyle 
+		 * @param {number} timestamp The millisecond timestamp from the database.
+		 */
+		function addMessageToDOM(userName, text, color, borderStyle, timestamp) {
 			const container = document.getElementById('messages-wrapper');
 			if (!container) return;
 
@@ -148,7 +157,8 @@
 			el.style.borderColor = dark;
 			el.style.borderStyle = borderStyle;
 			
-			const time = new Date();
+			// Use the provided timestamp instead of the current date/time
+			const time = new Date(timestamp); 
 			const timeStr = `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}`;
 			
 			el.innerHTML = `
@@ -174,7 +184,8 @@
 				userId: state.user.uid,
 				userName: state.username,
 				text: text,
-				timestamp: Date.now(),
+				// timestamp is correctly saved as Date.now() here
+				timestamp: Date.now(), 
 				color: state.color,
 				borderStyle: state.borderStyle
 			});
