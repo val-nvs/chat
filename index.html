@@ -26,9 +26,16 @@
 		}
 		@font-face { font-family: 'PerfectDOS'; src: url('./PerfectDosVga.ttf') format('truetype'); }
 		* { font-family: 'PerfectDOS', monospace; margin: 0; padding: 0; box-sizing: border-box; }
-		html, body { height: 100%; overflow: hidden; background: var(--bg-dark); color: var(--white); }
+		html, body { 
+			height: 100%; 
+			overflow: hidden; 
+			background: var(--bg-dark); 
+			color: var(--white); 
+			margin: 0; 
+			padding: 0; 
+		}
 		body { border: 1px solid var(--accent-cyan); }
-		.login-overlay { position: fixed; inset: 0; background: rgba(11,11,13,0.3); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; z-index: 100; }
+		.login-overlay { position: fixed; inset: 0; background: rgba(40, 40 ,40, 0.7); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; z-index: 100; }
 		.login-overlay h1 { color: var(--accent-cyan); font-size: 3rem; margin-bottom: var(--spacing); }
 		.enter-btn { background: var(--accent-cyan); color: var(--bg-dark); padding: 16px 48px; border: none; font-size: var(--font-lg); cursor: pointer; }
 		#chat-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
@@ -43,6 +50,15 @@
 		.message { position: relative; font-size: var(--font-lg); padding: var(--spacing-half) var(--spacing); margin: 0.6rem 0; max-width: 95%; align-self: flex-end; background: var(--bg-dark); border: var(--border-width) solid; }
 		.message .name { position: absolute; top: -0.6em; left: .6em; font-size: var(--font-lg); background: var(--bg-dark); }
 		.message .time { position: absolute; bottom: -0.6em; right: .6em; font-size: var(--font-lg); transform: scaleY(0.6); background: var(--bg-dark); }
+		.date-separator {
+			align-self: center;
+			margin: 1rem 0 0.5rem 0;
+			padding: 0.25rem 0.75rem;
+			font-size: var(--font-md);
+			color: var(--border-light); 
+			border: 1px solid var(--border-gray);
+			background: var(--bg-dark);
+		}
 		#input-area { border-top: var(--border-width) solid var(--border-gray); display: flex; }
 		#input-area input { flex: 1; padding: var(--spacing); font-size: var(--font-lg); background: var(--bg-dark); color: var(--accent-cyan); border: none; outline: none; min-width: 0; }
 		#send-btn { padding: var(--spacing) 1.5rem; font-size: var(--font-lg); background: var(--border-gray); color: var(--white); border: none; border-left: var(--border-width) solid var(--border-gray); cursor: pointer; flex-shrink: 0; }
@@ -108,6 +124,7 @@
 		};
 
 		const loadedIds = new Set();
+		let lastDisplayedDate = null; 
 
 		document.getElementById('messageInput').oninput = e => state.input = e.target.value;
 		document.getElementById('messageInput').onkeypress = e => {
@@ -124,10 +141,8 @@
 			loadedIds.add(id);
 
 			const msg = snapshot.val();
-			// Pass the timestamp from the database message object
 			addMessageToDOM(msg.userName, msg.text, msg.color, msg.borderStyle, msg.timestamp);
 			
-			// Send notification if not from current user
 			if (msg.userId !== state.user?.uid && Notification.permission === 'granted') {
 				new Notification(`${msg.userName}`, {
 					body: msg.text,
@@ -136,18 +151,37 @@
 			}
 		});
 
-		/**
-		 * Adds a message to the DOM using the original message timestamp.
-		 * @param {string} userName 
-		 * @param {string} text 
-		 * @param {string} color 
-		 * @param {string} borderStyle 
-		 * @param {number} timestamp The millisecond timestamp from the database.
-		 */
+		function getDateKey(dateObj) {
+			return dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDate();
+		}
+
 		function addMessageToDOM(userName, text, color, borderStyle, timestamp) {
 			const container = document.getElementById('messages-wrapper');
 			if (!container) return;
 
+			const time = new Date(timestamp);
+			const currentDateKey = getDateKey(time);
+			
+			if (lastDisplayedDate === null || lastDisplayedDate !== currentDateKey) {
+				const separator = document.createElement('div');
+				separator.className = 'date-separator';
+				
+				const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+				separator.textContent = time.toLocaleDateString(undefined, dateOptions).toUpperCase();
+				
+				container.appendChild(separator);
+				lastDisplayedDate = currentDateKey;
+			}
+			
+			const minLength = 5;
+			const requiredMinLength = Math.max(minLength, userName.length);
+			
+			if (text.length < requiredMinLength) {
+				const paddingNeeded = requiredMinLength - text.length;
+				const padding = '\u00a0'.repeat(paddingNeeded); 
+				text = text + padding;
+			}
+			
 			const el = document.createElement('div');
 			el.className = 'message';
 			
@@ -157,8 +191,6 @@
 			el.style.borderColor = dark;
 			el.style.borderStyle = borderStyle;
 			
-			// Use the provided timestamp instead of the current date/time
-			const time = new Date(timestamp); 
 			const timeStr = `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}`;
 			
 			el.innerHTML = `
@@ -184,7 +216,6 @@
 				userId: state.user.uid,
 				userName: state.username,
 				text: text,
-				// timestamp is correctly saved as Date.now() here
 				timestamp: Date.now(), 
 				color: state.color,
 				borderStyle: state.borderStyle
@@ -301,6 +332,7 @@
 					state.user = null;
 					state.username = '';
 					state.showUsernamePrompt = false;
+					lastDisplayedDate = null; 
 					await signOut(auth);
 					renderOverlay();
 				};
@@ -339,7 +371,6 @@
 					state.borderStyle = data.borderStyle || 'solid';
 					state.showUsernamePrompt = false;
 					
-					// Request notification permission
 					if (Notification.permission === 'default') {
 						Notification.requestPermission();
 					}
